@@ -1,7 +1,7 @@
 import React from "react";
 import { useState } from "react";
 
-import SettingMenu from "./SettingMenu"
+import SettingsMenu from "./SettingsMenu";
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -12,8 +12,8 @@ const Navbar = () => {
 
   return (
     <div>
-      <nav className="bg-white border-gray-200 dark:bg-gray-900">
-        <div className="max-w-screen-xl flex flex-wrap items-center justify-between mx-auto p-4">
+      <nav className="bg-white border-gray-200 dark:bg-gray-900 w-full">
+        <div className="flex items-center justify-between mx-auto p-4 w-full">
           <div className="flex items-center space-x-3 rtl:space-x-reverse">
             <img
               src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSMA2RoDdhkwDsLpz292znc9A5fj4PNPJMl5Q&s"
@@ -25,8 +25,8 @@ const Navbar = () => {
             </span>
           </div>
 
-          <div className="hidden w-full md:block md:w-auto">
-            <ul className="font-medium flex flex-col p-4 md:p-0 mt-4 border border-gray-100 rounded-lg bg-gray-50 md:flex-row md:space-x-8 rtl:space-x-reverse md:mt-0 md:border-0 md:bg-white dark:bg-gray-800 md:dark:bg-gray-900 dark:border-gray-700">
+          <div className="md:block md:w-auto">
+            <ul className="font-medium flex p-4 md:p-0 space-x-8 rtl:space-x-reverse md:mt-0 dark:border-gray-700">
               <li>
                 <button
                   onClick={toggleMenu}
@@ -36,7 +36,7 @@ const Navbar = () => {
                   aria-controls="navbar-default"
                   aria-expanded={isMenuOpen ? "true" : "false"}
                 >
-                  <span className="sr-only">Open main menu</span>
+                  <span className="sr-only">Open settings menu</span>
                   <svg
                     className="w-5 h-5"
                     aria-hidden="true"
@@ -54,9 +54,7 @@ const Navbar = () => {
                   </svg>
                 </button>
 
-                {isMenuOpen && (
-                  <SettingMenu/>
-                )}
+                {isMenuOpen && <SettingsMenu />}
               </li>
             </ul>
           </div>
