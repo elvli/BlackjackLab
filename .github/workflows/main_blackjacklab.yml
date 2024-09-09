@@ -31,7 +31,7 @@ jobs:
         uses: TheDoctor0/zip-release@0.7.6
         with:
           filename: release.zip
-          path: ./client/build/*
+          path: ./build/*
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
