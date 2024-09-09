@@ -1,11 +1,11 @@
 import React, { useState } from "react";
 
-const SettingsMenu = () => {
-  const [Regular, SetRegular] = useState(true);
-  const [AceX, SetAceX] = useState(false);
-  const [Pairs, SetPairs] = useState(false);
-  const [Stands17, SetStands17] = useState(true);
-  const [Hits17, SetHits17] = useState(false);
+const SettingsMenu = ({ settings, setSettings }) => {
+  const [Regular, SetRegular] = useState(settings.Regular);
+  const [AceX, SetAceX] = useState(settings.AceX);
+  const [Pairs, SetPairs] = useState(settings.Pairs);
+  const [Stands17, SetStands17] = useState(settings.Stands17);
+  const [Hits17, SetHits17] = useState(settings.Hits17);
 
   const handleRegular = () => {
     SetRegular(!Regular);
@@ -25,14 +25,26 @@ const SettingsMenu = () => {
     SetPairs(!Pairs);
   };
 
-  const handleStand17 = () => {
-    SetStands17(!Stands17);
-    SetHits17(!Hits17);
+  const handleDealer17 = () => {
+    const newStands17 = !Stands17;
+
+    SetStands17(newStands17);
+    SetHits17(!newStands17);
   };
 
-  const handleHit17 = () => {
-    SetHits17(!Hits17);
-    SetStands17(!Stands17);
+  const handleReset = () => {
+    setSettings((prevSettings) => {
+      const newSettings = {
+        Regular: Regular,
+        AceX: AceX,
+        Pairs: Pairs,
+        Stands17: Stands17,
+        Hits17: Hits17,
+      };
+
+      console.log(newSettings);
+      return newSettings;
+    });
   };
 
   return (
@@ -124,7 +136,7 @@ const SettingsMenu = () => {
               type="checkbox"
               value=""
               class="sr-only peer"
-              onClick={handleStand17}
+              onClick={handleDealer17}
               checked={Stands17}
             />
             <div class="relative w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
@@ -142,7 +154,7 @@ const SettingsMenu = () => {
               type="checkbox"
               value=""
               class="sr-only peer"
-              onClick={handleHit17}
+              onClick={handleDealer17}
               checked={Hits17}
             />
             <div class="relative w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
@@ -158,6 +170,7 @@ const SettingsMenu = () => {
           <label class="inline-flex items-center cursor-pointer">
             <button
               type="button"
+              onClick={handleReset}
               class="text-white bg-red-700 hover:bg-red-800 focus:ring-4 focus:ring-red-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-red-600 dark:hover:bg-red-700 focus:outline-none dark:focus:ring-red-800"
             >
               Reset Deck
@@ -170,3 +183,66 @@ const SettingsMenu = () => {
 };
 
 export default SettingsMenu;
+
+// const handleRegular = () => {
+//   const newRegular = !Regular;
+
+//   SetRegular(newRegular);
+//   SetAceX(!newRegular);
+//   SetPairs(false);
+
+//   setSettings({
+//     Regular: newRegular,
+//     AceX: Regular,
+//     Pairs: false,
+//     Stands17,
+//     Hits17,
+//   });
+// };
+
+// const handleAceX = () => {
+//   const newAceX = !AceX;
+
+//   SetRegular(false);
+//   SetAceX(newAceX);
+//   SetPairs(!newAceX);
+
+//   setSettings({
+//     Regular: false,
+//     AceX: newAceX,
+//     Pairs: AceX,
+//     Stands17,
+//     Hits17,
+//   });
+// };
+
+// const handlePairs = () => {
+//   const newPairs = !Pairs;
+
+//   SetRegular(!newPairs);
+//   SetAceX(false);
+//   SetPairs(newPairs);
+
+//   setSettings({
+//     Regular: !newPairs,
+//     AceX: false,
+//     Pairs: newPairs,
+//     Stands17,
+//     Hits17,
+//   });
+// };
+
+// const handleDealer17 = () => {
+//   const newStands17 = !Stands17;
+
+//   SetStands17(newStands17);
+//   SetHits17(!newStands17);
+
+//   setSettings({
+//     Regular,
+//     AceX,
+//     Pairs,
+//     Stands17: newStands17,
+//     Hits17: !newStands17,
+//   });
+// };

@@ -3,7 +3,7 @@ import { useState } from "react";
 
 import SettingsMenu from "./SettingsMenu";
 
-const Navbar = () => {
+const Navbar = ({ settings, setSettings }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const toggleMenu = () => {
@@ -54,7 +54,9 @@ const Navbar = () => {
                   </svg>
                 </button>
 
-                {isMenuOpen && <SettingsMenu />}
+                {isMenuOpen && (
+                  <SettingsMenu settings={settings} setSettings={setSettings} />
+                )}
               </li>
             </ul>
           </div>
