@@ -1,11 +1,18 @@
 import React, { useState } from "react";
 
 const SettingsMenu = ({ settings, setSettings }) => {
+  const [NumDecks, SetNumDecks] = useState(settings.NumDecks);
   const [Regular, SetRegular] = useState(settings.Regular);
   const [AceX, SetAceX] = useState(settings.AceX);
   const [Pairs, SetPairs] = useState(settings.Pairs);
   const [Stands17, SetStands17] = useState(settings.Stands17);
   const [Hits17, SetHits17] = useState(settings.Hits17);
+
+  const handleNumDecks = (event) => {
+    const value = event.target.value.replace(/\D/g, "");
+    if (value === "") SetNumDecks(4);
+    else SetNumDecks(parseInt(value, 10));
+  };
 
   const handleRegular = () => {
     SetRegular(!Regular);
@@ -35,6 +42,7 @@ const SettingsMenu = ({ settings, setSettings }) => {
   const handleReset = () => {
     setSettings((prevSettings) => {
       const newSettings = {
+        NumDecks: NumDecks,
         Regular: Regular,
         AceX: AceX,
         Pairs: Pairs,
@@ -64,10 +72,12 @@ const SettingsMenu = ({ settings, setSettings }) => {
               Number of Decks
             </span>
             <input
-              type="text"
+              type="number"
               id="first_name"
               class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-40 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+              onChange={handleNumDecks}
               placeholder="4"
+              pattern="\d*"
               required
             />
           </label>
@@ -171,7 +181,7 @@ const SettingsMenu = ({ settings, setSettings }) => {
             <button
               type="button"
               onClick={handleReset}
-              class="text-white bg-red-700 hover:bg-red-800 focus:ring-4 focus:ring-red-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-red-600 dark:hover:bg-red-700 focus:outline-none dark:focus:ring-red-800"
+              class="text-white bg-red-700 hover:bg-red-800 focus:ring-4 focus:ring-red-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 dark:bg-red-600 dark:hover:bg-red-700 focus:outline-none dark:focus:ring-red-800"
             >
               Reset Deck
             </button>

@@ -4,6 +4,7 @@ import BlackjackTable from "./Components/BlackjackTable";
 
 function App() {
   const [settings, setSettings] = useState({
+    NumDecks: 4,
     Regular: true,
     AceX: false,
     Pairs: false,
