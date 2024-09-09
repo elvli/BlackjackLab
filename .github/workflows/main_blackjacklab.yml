@@ -31,7 +31,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: node-app
-          path: .
+          path: .  # Upload the entire repo
 
   deploy:
     runs-on: ubuntu-latest
@@ -61,5 +61,4 @@ jobs:
         with:
           app-name: 'blackjacklab'
           slot-name: 'Production'
-          package: .
-          
+          package: ./node-app
