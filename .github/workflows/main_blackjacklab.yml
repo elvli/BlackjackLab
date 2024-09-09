@@ -25,13 +25,19 @@ jobs:
         run: |
           npm install
           npm run build --if-present
-          zip -r build.zip build # Create a zip file of the build directory
+          npm test -- --passWithNoTests
+
+      - name: Zip artifact for deployment
+        uses: TheDoctor0/zip-release@0.7.6
+        with:
+          filename: release.zip
+          path: ./client/build/*
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
         with:
           name: node-app
-          path: build.zip # Upload the zip file
+          path: release.zip
 
   deploy:
     runs-on: ubuntu-latest
@@ -40,7 +46,7 @@ jobs:
       name: "Production"
       url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
     permissions:
-      id-token: write # This is required for requesting the JWT
+      id-token: write #This is required for requesting the JWT
 
     steps:
       - name: Download artifact from build job
@@ -48,8 +54,8 @@ jobs:
         with:
           name: node-app
 
-      - name: Unzip the artifact
-        run: unzip node-app.zip
+      - name: Unzip artifact for deployment
+        run: unzip release.zip
 
       - name: Login to Azure
         uses: azure/login@v2
@@ -64,4 +70,4 @@ jobs:
         with:
           app-name: "blackjacklab"
           slot-name: "Production"
-          package: .
+          package: release.zip
