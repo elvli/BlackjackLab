@@ -6,13 +6,14 @@ const BlackjackTable = () => {
   return (
     <div className="flex flex-col min-h-[calc(100vh-72px)]">
       <div className="flex-1 bg-green-700 flex justify-center">
-        <PlayingCard value="AS" />
+        <PlayingCard value="A-S" />
         <PlayingCard value="CB" />
       </div>
 
       <div className="flex-1 bg-green-900 flex justify-center">
-        <PlayingCard value="AD" />
-        <PlayingCard value="KS" />
+        <PlayingCard value="J-D" />
+        <PlayingCard value="A-S" />
+        <PlayingCard value="A-D" />
       </div>
 
       <div className="h-1/5 mt-2 flex justify-center items-center">
