@@ -23,7 +23,6 @@ const PlayingCard = ({ value }) => {
 
   return (
     <div className="flex items-center justify-center">
-      {/* {cardImage ? ( */}
       <img
         src={cardImage}
         alt={value}
