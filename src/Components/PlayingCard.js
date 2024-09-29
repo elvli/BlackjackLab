@@ -28,9 +28,6 @@ const PlayingCard = ({ value }) => {
         alt={value}
         className="object-contain max-w-sm max-h-40 sm:max-h-48 md:max-h-56 lg:max-h-72"
       />
-      {/* ) : (
-        <span className="text-gray-500">No Image</span>
-      )} */}
     </div>
   );
 };

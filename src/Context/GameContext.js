@@ -75,6 +75,60 @@ export const GameProvider = ({ children }) => {
     console.log("Remaining deck:", shuffledDeck.slice(4));
   };
 
+  const resetGame = () => {
+    setDeck([]);
+    setNumHands(1);
+    setCurrentHand(1);
+    setPlayerCards([]);
+    setDealerCards([]);
+    setGameStatus("idle");
+
+    startGame();
+    setGameStatus("player");
+  };
+
+  const getHandValue = (hand) => {
+    let total = 0;
+    let aceCount = 0;
+
+    for (let i = 0; i < hand.length; i++) {
+      let data = hand[i].split("-");
+      let value = data[0];
+
+      if (isNaN(value)) {
+        if (value === "A") {
+          total += 11;
+          aceCount++;
+        } else total += 10;
+      } else total += parseInt(value);
+    }
+
+    while (total > 21 && aceCount > 0) {
+      total -= 10;
+      aceCount--;
+    }
+
+    return total;
+  };
+
+  const hit = () => {
+    let card = deck[0];
+    let total = 0;
+
+    setPlayerCards((prevPlayerCards) => {
+      const updatedPlayerCards = [...prevPlayerCards, card];
+      total = getHandValue(updatedPlayerCards);
+      return updatedPlayerCards;
+    });
+    setDeck(deck.slice(1));
+
+    if (total > 21) setGameStatus("dealer");
+  };
+
+  const stand = () => {
+    setGameStatus("dealer");
+  };
+
   return (
     <GameContext.Provider
       value={{
@@ -90,12 +144,12 @@ export const GameProvider = ({ children }) => {
         playerCards,
         dealerCards,
         gameStatus,
-        setNumDecks: SetNumDecks,
-        setRegular: SetRegular,
-        setAceX: SetAceX,
-        setPairs: SetPairs,
-        setStands17: SetStands17,
-        setHits17: SetHits17,
+        SetNumDecks,
+        SetRegular,
+        SetAceX,
+        SetPairs,
+        SetStands17,
+        SetHits17,
         setDeck,
         setNumHands,
         setCurrentHand,
@@ -105,6 +159,10 @@ export const GameProvider = ({ children }) => {
         createDeck,
         shuffleDeck,
         startGame,
+        resetGame,
+        getHandValue,
+        hit,
+        stand,
       }}
     >
       {children}

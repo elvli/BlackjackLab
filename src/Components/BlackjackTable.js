@@ -4,14 +4,23 @@ import { useGameProvider } from "../Context/GameContext";
 import PlayingCard from "./PlayingCard";
 
 const BlackjackTable = () => {
-  const { startGame, playerCards, dealerCards } = useGameProvider();
+  const {
+    startGame,
+    gameStatus,
+    playerCards,
+    dealerCards,
+    hit,
+    stand,
+  } = useGameProvider();
 
   const handleHit = () => {
     console.log("Hit button clicked");
+    hit();
   };
 
   const handleStand = () => {
     console.log("Stand button clicked");
+    stand();
   };
 
   const handleDouble = () => {
@@ -45,16 +54,26 @@ const BlackjackTable = () => {
       <div className="h-1/5 mt-2 flex justify-center items-center">
         <button
           type="button"
-          className="text-white bg-blue-600 hover:bg-blue-700 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-blue-500 dark:hover:bg-blue-600"
+          className={`text-white font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 ${
+            gameStatus === "dealer"
+              ? "bg-gray-400 cursor-not-allowed dark:bg-gray-600"
+              : "bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600"
+          }`}
           onClick={handleHit}
+          disabled={gameStatus === "dealer"}
         >
           Hit
         </button>
 
         <button
           type="button"
-          className="text-white bg-red-600 hover:bg-red-700 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-red-500 dark:hover:bg-red-600"
+          className={`text-white font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 ${
+            gameStatus === "dealer"
+              ? "bg-gray-400 cursor-not-allowed dark:bg-gray-600"
+              : "bg-red-600 hover:bg-red-700 dark:bg-red-500 dark:hover:bg-red-600"
+          }`}
           onClick={handleStand}
+          disabled={gameStatus === "dealer"}
         >
           Stand
         </button>

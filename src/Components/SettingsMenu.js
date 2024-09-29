@@ -1,12 +1,22 @@
-import React, { useState } from "react";
+import React from "react";
+import { useGameProvider } from "../Context/GameContext";
 
-const SettingsMenu = ({ settings, setSettings }) => {
-  const [NumDecks, SetNumDecks] = useState(settings.NumDecks);
-  const [Regular, SetRegular] = useState(settings.Regular);
-  const [AceX, SetAceX] = useState(settings.AceX);
-  const [Pairs, SetPairs] = useState(settings.Pairs);
-  const [Stands17, SetStands17] = useState(settings.Stands17);
-  const [Hits17, SetHits17] = useState(settings.Hits17);
+const SettingsMenu = () => {
+  const {
+    resetGame,
+    NumDecks,
+    SetNumDecks,
+    Regular,
+    SetRegular,
+    AceX,
+    SetAceX,
+    Pairs,
+    SetPairs,
+    Stands17,
+    SetStands17,
+    Hits17,
+    SetHits17,
+  } = useGameProvider();
 
   const handleNumDecks = (event) => {
     const value = event.target.value.replace(/\D/g, "");
@@ -40,19 +50,7 @@ const SettingsMenu = ({ settings, setSettings }) => {
   };
 
   const handleReset = () => {
-    setSettings((prevSettings) => {
-      const newSettings = {
-        NumDecks: NumDecks,
-        Regular: Regular,
-        AceX: AceX,
-        Pairs: Pairs,
-        Stands17: Stands17,
-        Hits17: Hits17,
-      };
-
-      console.log(newSettings);
-      return newSettings;
-    });
+    resetGame();
   };
 
   return (
@@ -76,7 +74,7 @@ const SettingsMenu = ({ settings, setSettings }) => {
               id="first_name"
               class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-40 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
               onChange={handleNumDecks}
-              placeholder="4"
+              value={NumDecks}
               pattern="\d*"
               required
             />
@@ -90,7 +88,6 @@ const SettingsMenu = ({ settings, setSettings }) => {
           <label class="inline-flex items-center cursor-pointer">
             <input
               type="checkbox"
-              value=""
               class="sr-only peer"
               onClick={handleRegular}
               checked={Regular}
@@ -108,7 +105,6 @@ const SettingsMenu = ({ settings, setSettings }) => {
           <label class="inline-flex items-center cursor-pointer">
             <input
               type="checkbox"
-              value=""
               class="sr-only peer"
               onClick={handleAceX}
               checked={AceX}
@@ -126,7 +122,6 @@ const SettingsMenu = ({ settings, setSettings }) => {
           <label class="inline-flex items-center cursor-pointer">
             <input
               type="checkbox"
-              value=""
               class="sr-only peer"
               onClick={handlePairs}
               checked={Pairs}
@@ -144,7 +139,6 @@ const SettingsMenu = ({ settings, setSettings }) => {
           <label class="inline-flex items-center cursor-pointer">
             <input
               type="checkbox"
-              value=""
               class="sr-only peer"
               onClick={handleDealer17}
               checked={Stands17}
@@ -162,7 +156,6 @@ const SettingsMenu = ({ settings, setSettings }) => {
           <label class="inline-flex items-center cursor-pointer">
             <input
               type="checkbox"
-              value=""
               class="sr-only peer"
               onClick={handleDealer17}
               checked={Hits17}
@@ -181,7 +174,7 @@ const SettingsMenu = ({ settings, setSettings }) => {
             <button
               type="button"
               onClick={handleReset}
-              class="text-white bg-red-700 hover:bg-red-800 focus:ring-4 focus:ring-red-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 dark:bg-red-600 dark:hover:bg-red-700 focus:outline-none dark:focus:ring-red-800"
+              class="text-white bg-red-700 hover:bg-red-800 font-medium rounded-lg text-sm px-5 py-2.5 me-2 dark:bg-red-600 dark:hover:bg-red-700 focus:outline-none dark:focus:ring-red-800"
             >
               Reset Deck
             </button>
@@ -193,66 +186,3 @@ const SettingsMenu = ({ settings, setSettings }) => {
 };
 
 export default SettingsMenu;
-
-// const handleRegular = () => {
-//   const newRegular = !Regular;
-
-//   SetRegular(newRegular);
-//   SetAceX(!newRegular);
-//   SetPairs(false);
-
-//   setSettings({
-//     Regular: newRegular,
-//     AceX: Regular,
-//     Pairs: false,
-//     Stands17,
-//     Hits17,
-//   });
-// };
-
-// const handleAceX = () => {
-//   const newAceX = !AceX;
-
-//   SetRegular(false);
-//   SetAceX(newAceX);
-//   SetPairs(!newAceX);
-
-//   setSettings({
-//     Regular: false,
-//     AceX: newAceX,
-//     Pairs: AceX,
-//     Stands17,
-//     Hits17,
-//   });
-// };
-
-// const handlePairs = () => {
-//   const newPairs = !Pairs;
-
-//   SetRegular(!newPairs);
-//   SetAceX(false);
-//   SetPairs(newPairs);
-
-//   setSettings({
-//     Regular: !newPairs,
-//     AceX: false,
-//     Pairs: newPairs,
-//     Stands17,
-//     Hits17,
-//   });
-// };
-
-// const handleDealer17 = () => {
-//   const newStands17 = !Stands17;
-
-//   SetStands17(newStands17);
-//   SetHits17(!newStands17);
-
-//   setSettings({
-//     Regular,
-//     AceX,
-//     Pairs,
-//     Stands17: newStands17,
-//     Hits17: !newStands17,
-//   });
-// };
