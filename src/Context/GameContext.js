@@ -19,6 +19,7 @@ export const GameProvider = ({ children }) => {
   const [currentHand, setCurrentHand] = useState(1);
   const [playerCards, setPlayerCards] = useState([]);
   const [dealerCards, setDealerCards] = useState([]);
+  const [dealerHidden, setDealerHidden] = useState("");
   const [gameStatus, setGameStatus] = useState("idle");
 
   const createDeck = (numDecks) => {
@@ -60,11 +61,9 @@ export const GameProvider = ({ children }) => {
     return shuffledDeck;
   };
 
-  const startGame = () => {
-    const newDeck = createDeck(NumDecks);
-    const shuffledDeck = shuffleDeck(newDeck);
-
-    const dealerHand = [shuffledDeck[0], shuffledDeck[2]];
+  const startRound = (shuffledDeck) => {
+    setDealerHidden(shuffledDeck[0]);
+    const dealerHand = ["CB", shuffledDeck[2]];
     const playerHand = [shuffledDeck[1], shuffledDeck[3]];
 
     setDealerCards(dealerHand);
@@ -73,6 +72,14 @@ export const GameProvider = ({ children }) => {
 
     console.log("Dealt cards:", dealerHand, playerHand);
     console.log("Remaining deck:", shuffledDeck.slice(4));
+  };
+
+  const startGame = () => {
+    const newDeck = createDeck(NumDecks);
+    const shuffledDeck = shuffleDeck(newDeck);
+    setDeck(shuffledDeck);
+
+    startRound(shuffledDeck);
   };
 
   const resetGame = () => {
@@ -129,6 +136,18 @@ export const GameProvider = ({ children }) => {
     setGameStatus("dealer");
   };
 
+  const double = () => {
+    let card = deck[0];
+
+    setPlayerCards((prevPlayerCards) => {
+      const updatedPlayerCards = [...prevPlayerCards, card];
+      return updatedPlayerCards;
+    });
+    setDeck(deck.slice(1));
+
+    setGameStatus("dealer");
+  };
+
   return (
     <GameContext.Provider
       value={{
@@ -163,6 +182,7 @@ export const GameProvider = ({ children }) => {
         getHandValue,
         hit,
         stand,
+        double,
       }}
     >
       {children}
