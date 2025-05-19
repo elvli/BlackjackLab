@@ -1,10 +1,11 @@
-import Link from "next/link";
+import Navbar from "./components/Navbar";
+import GameTable from "./components/GameTable";
 
 export default function Home() {
   return (
-    <main>
-      <h1>Hello</h1>
-      <Link href="/users">Users</Link>
-    </main>
+    <div className="min-h-screen flex flex-col bg-gray-900">
+      <Navbar />
+      <GameTable />
+    </div>
   );
 }
