@@ -1,7 +1,6 @@
 "use client";
 
 import {
-  HomeIcon,
   LogOutIcon,
   MenuIcon,
   MoonIcon,
@@ -50,17 +49,6 @@ function MobileNavbar() {
             <SheetTitle>Menu</SheetTitle>
           </SheetHeader>
           <nav className="flex flex-col space-y-4">
-            <Button
-              variant="ghost"
-              className="flex items-center gap-3 justify-start"
-              asChild
-            >
-              <Link href="/">
-                <HomeIcon className="w-4 h-4" />
-                Home
-              </Link>
-            </Button>
-
             {isSignedIn ? (
               <>
                 <Button
