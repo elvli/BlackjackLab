@@ -6,6 +6,8 @@ import { Montserrat } from "next/font/google";
 import "./globals.css";
 
 import Navbar from "@/components/Navbar";
+import { AppSidebar } from "@/components/AppSidebar";
+import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 
 const montserrat = Montserrat({
   subsets: ["latin"],
@@ -24,28 +26,35 @@ export default function RootLayout({
 }>) {
   return (
     <ClerkProvider>
-      <html lang="en" className={montserrat.className} suppressHydrationWarning>
-        <body className={`antialiased`}>
+      <html
+        lang="en"
+        className={montserrat.className}
+        suppressHydrationWarning
+        style={{ height: "100%" }}
+      >
+        <body className="antialiased h-screen overflow-hidden">
           <ThemeProvider
             attribute="class"
             defaultTheme="system"
             enableSystem
             disableTransitionOnChange
           >
-            <div className="min-h-screen">
-              <Navbar />
+            {/* <div className="h-screen flex flex-col"> */}
+            <SidebarProvider>
+              <div className="flex flex-col h-screen w-screen">
+                <Navbar />
 
-              <main className="py-8">
-                {/* Container to center content */}
-                <div className="max-w-7xl mx-auto px-4">
-                  <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                    <div className="hidden lg:block lg:col-span-3">sidebar</div>
+                <div className="flex flex-1 overflow-hidden">
+                  <AppSidebar />
 
-                    <div className="lg:col-span-9">{children}</div>
-                  </div>
+                  <SidebarInset className="flex-1 overflow-auto">
+                    {children}
+                  </SidebarInset>
                 </div>
-              </main>
-            </div>
+              </div>
+            </SidebarProvider>
+
+            {/* </div> */}
           </ThemeProvider>
         </body>
       </html>
