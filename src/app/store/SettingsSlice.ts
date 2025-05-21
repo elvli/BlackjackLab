@@ -6,7 +6,7 @@ interface SettingsState {
   numHands: number;
 }
 
-const initialState = { numDecks: 4, numHands: 2, } satisfies SettingsState as SettingsState
+const initialState = { numDecks: 4, numHands: 1, } satisfies SettingsState as SettingsState
 
 const settingsSlice = createSlice({
   name: 'settings',
