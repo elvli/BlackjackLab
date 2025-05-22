@@ -4,9 +4,10 @@ import type { PayloadAction } from '@reduxjs/toolkit'
 interface SettingsState {
   numDecks: number;
   numHands: number;
+  bjMultiplier: number;
 }
 
-const initialState = { numDecks: 4, numHands: 1, } satisfies SettingsState as SettingsState
+const initialState = { numDecks: 4, numHands: 1, bjMultiplier: 1.5 } satisfies SettingsState as SettingsState
 
 const settingsSlice = createSlice({
   name: 'settings',

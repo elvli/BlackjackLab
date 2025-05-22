@@ -29,24 +29,25 @@ const GameControls = () => {
   };
 
   return (
-    <div className="mt-3 text-center">
+    <div className="mt-4 text-center">
       {!betPlaced ? (
-        // <p className="text-lg text-red-600 font-semibold">
-        //   No bet placed. Please place a bet to start the round.
-        // </p>
-        <div className="flex gap-2">
-          Bankroll: {bankroll}
-          <div className="flex items-center space-x-2">
+        <div className="flex gap-2 justify-center">
+          <div className="inline-flex rounded-md overflow-hidden border border-gray-300 text-sm font-medium">
+            <div className="bg-gray-200 px-3 py-2 text-gray-700">Bankroll</div>
+            <div className="bg-white px-3 py-2 text-gray-900">${bankroll}</div>
+          </div>
+
+          <div className="flex items-center space-x-2 mx-4">
             <button
               type="button"
               className="px-2 py-1 bg-gray-200 rounded hover:bg-gray-300"
               onClick={() => setBetAmount((prev) => Math.max(prev - 25, 0))}
             >
-              <Minus className="w-4 h-4" />
+              <Minus className="w-4 h-4 text-black" />
             </button>
             <Input
               type="number"
-              className="w-24 text-center 
+              className="w-24 text-center font-medium
                 [appearance:textfield] 
                 [&::-webkit-outer-spin-button]:appearance-none 
                 [&::-webkit-inner-spin-button]:appearance-none"
@@ -58,9 +59,10 @@ const GameControls = () => {
               className="px-2 py-1 bg-gray-200 rounded hover:bg-gray-300"
               onClick={() => setBetAmount((prev) => prev + 25)}
             >
-              <Plus className="w-4 h-4" />
+              <Plus className="w-4 h-4 text-black" />
             </button>
           </div>
+
           <Button variant="outline" onClick={() => handlePlaceBet(betAmount)}>
             Place Bet
           </Button>

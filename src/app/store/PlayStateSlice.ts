@@ -7,7 +7,6 @@ export enum GameResult {
   LOSE = "LOSE",
   PUSH = "PUSH",
   SURRENDER = "SURRENDER",
-  BLACKJACK = "BLACKJACK",
   BUST = "BUST",
 }
 
@@ -22,6 +21,8 @@ interface PlayState {
   dealerScore: number;
   currentHandIndex: number;
   endState: (GameResult | null)[];
+  doubledHands: number[];
+  blackjackHands: number[];
 }
 
 const initialState: PlayState = {
@@ -35,7 +36,10 @@ const initialState: PlayState = {
   dealerScore: 0,
   currentHandIndex: 0,
   endState: [],
+  doubledHands: [],
+  blackjackHands: [],
 };
+
 
 function resolveDealerAndOutcomes(state: Draft<PlayState>) {
   // Dealer draws until at least 17
@@ -45,28 +49,58 @@ function resolveDealerAndOutcomes(state: Draft<PlayState>) {
     state.dealerScore = calculateHandScore(state.dealerHand);
   }
 
-  // Evaluate each player's hand against the dealer
+  // Evaluate each player's hand against the dealer and calculate payout
   state.playerScores.forEach((score, i) => {
+    const isDoubled = state.doubledHands.includes(i);
+    const isBlackjack = state.blackjackHands.includes(i);
+    const baseBet = isDoubled ? state.currentBet * 2 : state.currentBet;
+
+    if (state.endState[i] === GameResult.SURRENDER) {
+      state.bankroll += baseBet / 2;
+      return;
+    }
+
     if (state.endState[i] === GameResult.BUST) return;
+
+    const dealerHasBlackjack = state.dealerHand.length === 2 && calculateHandScore(state.dealerHand) === 21;
+
+    if (isBlackjack) {
+      if (dealerHasBlackjack) {
+        state.endState[i] = GameResult.PUSH;
+        state.bankroll += baseBet;
+      } else {
+        state.endState[i] = GameResult.WIN;
+        state.bankroll += baseBet + baseBet * 1.5; //BJ multiplier
+      }
+      return;
+    }
 
     if (score > 21) {
       state.endState[i] = GameResult.BUST;
     } else if (state.dealerScore > 21 || score > state.dealerScore) {
       state.endState[i] = GameResult.WIN;
-      state.bankroll += state.currentBet * 2;
+      state.bankroll += baseBet * 2;
     } else if (score === state.dealerScore) {
       state.endState[i] = GameResult.PUSH;
-      state.bankroll += state.currentBet;
+      state.bankroll += baseBet;
     } else {
       state.endState[i] = GameResult.LOSE;
     }
   });
 
+
+  state.endState.forEach((hand, i) => {
+    console.log("hand", i + 1, JSON.parse(JSON.stringify(hand)));
+  });
+
+  console.log("doubledHands", JSON.parse(JSON.stringify(state.doubledHands)));
+  console.log("blackjackHands", JSON.parse(JSON.stringify(state.blackjackHands)));
+
   // Reset bet state
   state.betPlaced = false;
   state.currentBet = 0;
+  state.doubledHands = [];
 }
-
 
 
 const playSlice = createSlice({
@@ -107,10 +141,6 @@ const playSlice = createSlice({
       state.endState = new Array(state.playerHands.length).fill(null);
     },
 
-    endRound(state, action: PayloadAction<(GameResult | null)[]>) {
-      state.endState = action.payload;
-      state.betPlaced = false;
-    },
 
     hit(state) {
       const handIndex = state.currentHandIndex;
@@ -124,10 +154,10 @@ const playSlice = createSlice({
 
       // Check if busted
       if (state.playerScores[handIndex] > 21) {
-        console.log("Bust");
         state.endState[handIndex] = GameResult.BUST;
         console.log(JSON.parse(JSON.stringify(state.endState)));
-        // Move to next hand if available
+
+        // Move to next hand or dealer logic
         if (state.currentHandIndex < state.playerHands.length - 1) {
           state.currentHandIndex += 1;
         } else {
@@ -138,14 +168,23 @@ const playSlice = createSlice({
       }
     },
 
-
     stand(state) {
       console.log("stand");
 
       const handIndex = state.currentHandIndex;
       if (handIndex < 0 || handIndex >= state.playerHands.length) return;
 
-      // Move to next hand if there is one
+      // Check for Blackjack
+      const hand = state.playerHands[handIndex];
+      const score = state.playerScores[handIndex];
+      if (hand.length === 2 && score === 21) {
+        if (!state.blackjackHands.includes(handIndex)) {
+          console.log("blackjack!!!")
+          state.blackjackHands.push(handIndex);
+        }
+      }
+
+      // Move to next hand or dealer logic
       if (state.currentHandIndex < state.playerHands.length - 1) {
         state.currentHandIndex += 1;
       } else {
@@ -155,33 +194,41 @@ const playSlice = createSlice({
       }
     },
 
+
     double(state) {
       console.log("double");
       const handIndex = state.currentHandIndex;
       if (state.deck.length === 0) return;
       if (handIndex < 0 || handIndex >= state.playerHands.length) return;
 
-      // Take one card and double the bet
+      // Double the bet by deducting currentBet from bankroll
+      state.bankroll -= state.currentBet;
+
       const card = dealCard(state.deck);
       state.playerHands[handIndex].push(card);
       state.playerScores[handIndex] = calculateHandScore(state.playerHands[handIndex]);
 
-      // Immediate stand after double
+      // Stand after double
       if (state.playerScores[handIndex] > 21) {
         console.log("Bust");
         state.endState[handIndex] = GameResult.BUST;
       }
 
-      // Move to next hand or dealer logic
+      // Move to next hand or resolve game
       if (state.currentHandIndex < state.playerHands.length - 1) {
         state.currentHandIndex += 1;
       } else {
-        resolveDealerAndOutcomes(state);
+        // Mark this hand as doubled for special payout
+        if (!state.doubledHands) state.doubledHands = [];
+        if (!state.doubledHands.includes(handIndex)) {
+          state.doubledHands.push(handIndex);
+        }
 
+        resolveDealerAndOutcomes(state);
         console.log("endState double", JSON.parse(JSON.stringify(state.endState)));
       }
-    }
-    ,
+    },
+
 
     split(state) {
       console.log("split");
@@ -195,10 +242,9 @@ const playSlice = createSlice({
         handToSplit[0].value === handToSplit[1].value &&
         state.deck.length > 0
       ) {
-        console.log("actually splitting");
         const firstCard = handToSplit[0];
         const secondCard = handToSplit[1];
-        console.log(firstCard, secondCard);
+        console.log("cards", firstCard, secondCard);
 
         // Remove original hand's data
         state.playerHands.splice(handIndex, 1);
@@ -218,7 +264,7 @@ const playSlice = createSlice({
         state.bankroll -= state.currentBet;
 
         state.currentHandIndex = handIndex;
-;
+        ;
       }
     },
 
@@ -230,9 +276,6 @@ const playSlice = createSlice({
       // Mark this hand as surrendered
       state.endState[handIndex] = GameResult.SURRENDER;
 
-      // Refund half of the bet
-      state.bankroll += state.currentBet / 2;
-
       // Move to next hand if available
       if (handIndex < state.playerHands.length - 1) {
         state.currentHandIndex += 1;
@@ -242,49 +285,6 @@ const playSlice = createSlice({
     },
 
 
-
-
-    // Call this once dealer has finished and you want to finalize results for each player hand
-    finalizeResults(state) {
-      const dealerScore = state.dealerScore;
-      const dealerBust = dealerScore > 21;
-
-      state.playerHands.forEach((hand, i) => {
-        if (state.endState[i] !== null) {
-          // Hand already has a result like BUST or SURRENDER, skip
-          return;
-        }
-
-        const score = state.playerScores[i];
-
-        if (score > 21) {
-          state.endState[i] = GameResult.BUST;
-          return;
-        }
-
-        if (score === 21 && hand.length === 2) {
-          // Blackjack check (natural 21 with 2 cards)
-          if (!(state.dealerScore === 21 && state.dealerHand.length === 2)) {
-            state.endState[i] = GameResult.BLACKJACK;
-            return;
-          }
-        }
-
-        if (dealerBust) {
-          state.endState[i] = GameResult.WIN;
-          return;
-        }
-
-        if (score > dealerScore) {
-          state.endState[i] = GameResult.WIN;
-        } else if (score < dealerScore) {
-          state.endState[i] = GameResult.LOSE;
-        } else {
-          state.endState[i] = GameResult.PUSH;
-        }
-      });
-    },
-
     setCurrentHandIndex(state, action: PayloadAction<number>) {
       if (action.payload >= 0 && action.payload < state.playerHands.length) {
         state.currentHandIndex = action.payload;
@@ -293,6 +293,6 @@ const playSlice = createSlice({
   },
 });
 
-export const { placeBet, startGame, endRound, hit, stand, double, split, surrender, setCurrentHandIndex, finalizeResults } = playSlice.actions;
+export const { placeBet, startGame, hit, stand, double, split, surrender, setCurrentHandIndex } = playSlice.actions;
 
 export default playSlice.reducer;
