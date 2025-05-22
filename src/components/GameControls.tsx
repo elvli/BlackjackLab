@@ -67,6 +67,7 @@ const GameControls = () => {
         </div>
       ) : (
         <div className="flex gap-2 justify-center">
+          Bankroll: {bankroll}
           <Button variant="outline" onClick={() => dispatch(hit())}>
             Hit
           </Button>

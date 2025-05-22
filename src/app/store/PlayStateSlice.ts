@@ -1,5 +1,6 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { createDeck, shuffleDeck, dealInitialHands, dealCard, calculateHandScore, Card } from "@/components/utils/cardUtils";
+import { Draft } from "immer";
 
 export enum GameResult {
   WIN = "WIN",
@@ -35,6 +36,38 @@ const initialState: PlayState = {
   currentHandIndex: 0,
   endState: [],
 };
+
+function resolveDealerAndOutcomes(state: Draft<PlayState>) {
+  // Dealer draws until at least 17
+  while (state.dealerScore < 17 && state.deck.length > 0) {
+    const dealerCard = dealCard(state.deck);
+    state.dealerHand.push(dealerCard);
+    state.dealerScore = calculateHandScore(state.dealerHand);
+  }
+
+  // Evaluate each player's hand against the dealer
+  state.playerScores.forEach((score, i) => {
+    if (state.endState[i] === GameResult.BUST) return;
+
+    if (score > 21) {
+      state.endState[i] = GameResult.BUST;
+    } else if (state.dealerScore > 21 || score > state.dealerScore) {
+      state.endState[i] = GameResult.WIN;
+      state.bankroll += state.currentBet * 2;
+    } else if (score === state.dealerScore) {
+      state.endState[i] = GameResult.PUSH;
+      state.bankroll += state.currentBet;
+    } else {
+      state.endState[i] = GameResult.LOSE;
+    }
+  });
+
+  // Reset bet state
+  state.betPlaced = false;
+  state.currentBet = 0;
+}
+
+
 
 const playSlice = createSlice({
   name: "play",
@@ -93,39 +126,14 @@ const playSlice = createSlice({
       if (state.playerScores[handIndex] > 21) {
         console.log("Bust");
         state.endState[handIndex] = GameResult.BUST;
-
+        console.log(JSON.parse(JSON.stringify(state.endState)));
         // Move to next hand if available
         if (state.currentHandIndex < state.playerHands.length - 1) {
           state.currentHandIndex += 1;
         } else {
-          // All hands played, trigger dealer logic
-          // Example: reveal dealer cards and compute results
-          while (state.dealerScore < 17 && state.deck.length > 0) {
-            const dealerCard = dealCard(state.deck);
-            state.dealerHand.push(dealerCard);
-            state.dealerScore = calculateHandScore(state.dealerHand);
-          }
+          resolveDealerAndOutcomes(state);
 
-          // Resolve each player's result
-          state.playerScores.forEach((score, i) => {
-            if (state.endState[i] !== null) return; // already busted
-
-            if (score > 21) {
-              state.endState[i] = GameResult.BUST;
-            } else if (state.dealerScore > 21 || score > state.dealerScore) {
-              state.endState[i] = GameResult.WIN;
-              state.bankroll += state.currentBet * 2; // Optional: winnings logic
-            } else if (score === state.dealerScore) {
-              state.endState[i] = GameResult.PUSH;
-              state.bankroll += state.currentBet; // Return bet
-            } else {
-              state.endState[i] = GameResult.LOSE;
-            }
-          });
-
-          // Reset betPlaced so new round can start
-          state.betPlaced = false;
-          state.currentBet = 0;
+          console.log("endState hit", JSON.parse(JSON.stringify(state.endState)));
         }
       }
     },
@@ -141,33 +149,9 @@ const playSlice = createSlice({
       if (state.currentHandIndex < state.playerHands.length - 1) {
         state.currentHandIndex += 1;
       } else {
-        // All player hands played – dealer plays now
-        while (state.dealerScore < 17 && state.deck.length > 0) {
-          const dealerCard = dealCard(state.deck);
-          state.dealerHand.push(dealerCard);
-          state.dealerScore = calculateHandScore(state.dealerHand);
-        }
+        resolveDealerAndOutcomes(state);
 
-        // Evaluate each player's hand against the dealer's
-        state.playerScores.forEach((score, i) => {
-          if (state.endState[i] === GameResult.BUST) return;
-
-          if (score > 21) {
-            state.endState[i] = GameResult.BUST;
-          } else if (state.dealerScore > 21 || score > state.dealerScore) {
-            state.endState[i] = GameResult.WIN;
-            state.bankroll += state.currentBet * 2;
-          } else if (score === state.dealerScore) {
-            state.endState[i] = GameResult.PUSH;
-            state.bankroll += state.currentBet;
-          } else {
-            state.endState[i] = GameResult.LOSE;
-          }
-        });
-
-        // Cleanup for next round
-        state.betPlaced = false;
-        state.currentBet = 0;
+        console.log("endState stand", JSON.parse(JSON.stringify(state.endState)));
       }
     },
 
@@ -177,60 +161,88 @@ const playSlice = createSlice({
       if (state.deck.length === 0) return;
       if (handIndex < 0 || handIndex >= state.playerHands.length) return;
 
+      // Take one card and double the bet
       const card = dealCard(state.deck);
       state.playerHands[handIndex].push(card);
       state.playerScores[handIndex] = calculateHandScore(state.playerHands[handIndex]);
 
-      // Usually player stands after doubling
+      // Immediate stand after double
       if (state.playerScores[handIndex] > 21) {
+        console.log("Bust");
         state.endState[handIndex] = GameResult.BUST;
       }
 
-      if (handIndex < state.playerHands.length - 1) {
+      // Move to next hand or dealer logic
+      if (state.currentHandIndex < state.playerHands.length - 1) {
         state.currentHandIndex += 1;
       } else {
-        // Dealer turn or end game
+        resolveDealerAndOutcomes(state);
+
+        console.log("endState double", JSON.parse(JSON.stringify(state.endState)));
       }
-    },
+    }
+    ,
 
     split(state) {
       console.log("split");
       const handIndex = state.currentHandIndex;
       const handToSplit = state.playerHands[handIndex];
 
+      console.log(handIndex, JSON.parse(JSON.stringify(handToSplit)));
+
       if (
         handToSplit.length === 2 &&
         handToSplit[0].value === handToSplit[1].value &&
         state.deck.length > 0
       ) {
+        console.log("actually splitting");
         const firstCard = handToSplit[0];
         const secondCard = handToSplit[1];
+        console.log(firstCard, secondCard);
 
+        // Remove original hand's data
         state.playerHands.splice(handIndex, 1);
         state.playerScores.splice(handIndex, 1);
         state.endState.splice(handIndex, 1);
 
+        // Create new hands
         const newHand1 = [firstCard, dealCard(state.deck)];
         const newHand2 = [secondCard, dealCard(state.deck)];
 
+        // Insert new hands
         state.playerHands.splice(handIndex, 0, newHand1, newHand2);
         state.playerScores.splice(handIndex, 0, calculateHandScore(newHand1), calculateHandScore(newHand2));
         state.endState.splice(handIndex, 0, null, null);
 
-        // Keep currentHandIndex on first of split hands
+        // Charge player for the second hand's bet
+        state.bankroll -= state.currentBet;
+
         state.currentHandIndex = handIndex;
+;
       }
     },
+
 
     surrender(state) {
       console.log("surrender");
       const handIndex = state.currentHandIndex;
+
+      // Mark this hand as surrendered
       state.endState[handIndex] = GameResult.SURRENDER;
-      // Player forfeits hand, usually ends turn on this hand
+
+      // Refund half of the bet
+      state.bankroll += state.currentBet / 2;
+
+      // Move to next hand if available
       if (handIndex < state.playerHands.length - 1) {
         state.currentHandIndex += 1;
+      } else {
+        resolveDealerAndOutcomes(state);
       }
     },
+
+
+
 
     // Call this once dealer has finished and you want to finalize results for each player hand
     finalizeResults(state) {

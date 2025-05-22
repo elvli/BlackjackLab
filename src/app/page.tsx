@@ -9,7 +9,7 @@ export default function Home() {
   const { playerHands, dealerHand, playerScores, dealerScore } = useSelector(
     (state: RootState) => state.play
   );
-  const { numHands } = useSelector((state: RootState) => state.settings);
+  // const { numHands } = useSelector((state: RootState) => state.settings);
 
   const getAngles = (n: number) => {
     if (n === 1) return [90];
@@ -19,7 +19,6 @@ export default function Home() {
     const step = (end - start) / (n - 1);
     return Array.from({ length: n }, (_, i) => start + i * step);
   };
-
 
   return (
     <div className="relative h-screen overflow-hidden p-4 flex flex-col">
@@ -38,7 +37,7 @@ export default function Home() {
                 </div>
               </div>
 
-              {getAngles(numHands).map((deg, i) => {
+              {getAngles(playerHands.length).map((deg, i) => {
                 const angle = (deg * Math.PI) / 180;
                 const radius = 280;
                 const x = Math.cos(angle) * radius;
