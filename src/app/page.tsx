@@ -32,7 +32,7 @@ export default function Home() {
             <div className="relative w-full flex-grow pt-16 flex items-center justify-center">
               <div className="absolute top-[10vh] left-1/2 -translate-x-1/2 dark:text-black">
                 <div className="bg-white rounded p-2 shadow">
-                  Dealer (Score: {dealerScore})
+                  {/* Dealer (Score: {dealerScore}) */}
                   {dealerHand.map((card, i) => (
                     <div key={i}>
                       {card.value} of {card.suit}
