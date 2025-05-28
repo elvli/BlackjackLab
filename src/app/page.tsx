@@ -10,7 +10,7 @@ export default function Home() {
     playerHands,
     dealerHand,
     playerScores,
-    dealerScore,
+    // dealerScore,
     currentHandIndex,
   } = useSelector((state: RootState) => state.play);
   // const { numHands } = useSelector((state: RootState) => state.settings);
