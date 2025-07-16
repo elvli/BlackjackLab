@@ -43,6 +43,28 @@
   --radius-xl: calc(var(--radius) + 4px);
 }
 
+@theme {
+  --animate-border-pulse: pulse 1.5s ease-in-out infinite;
+
+  @keyframes pulse {
+    0% {
+      border-color: #1e3a8a; /* blue-900 */
+    }
+    25% {
+      border-color: #1d4ed8; /* blue-700 */
+    }
+    50% {
+      border-color: #3b82f6; /* blue-500 */
+    }
+    75% {
+      border-color: #60a5fa; /* blue-400 */
+    }
+    100% {
+      border-color: #1e3a8a; /* back to blue-900 */
+    }
+  }
+}
+
 :root {
   --radius: 0.625rem;
   --card: oklch(1 0 0);
