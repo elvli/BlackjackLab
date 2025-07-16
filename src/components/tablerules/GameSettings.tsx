@@ -29,13 +29,13 @@ import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { setEnvironmentData } from "worker_threads";
+// import { setEnvironmentData } from "worker_threads";
 
 const GameSettings = () => {
   const dispatch = useDispatch();
   const {
     numDecks,
-    numHands,
+    // numHands,
     soft17,
     reshuffle,
     allowSurrender,

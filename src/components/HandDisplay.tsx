@@ -1,6 +1,15 @@
 import Image from "next/image";
 
-const HandDisplay = ({ hand }) => {
+interface Card {
+  value: string;
+  suit: string;
+}
+
+interface HandDisplayProps {
+  hand: Card[];
+}
+
+const HandDisplay: React.FC<HandDisplayProps> = ({ hand }) => {
   return (
     <div className="relative flex">
       {hand.map((card, idx) => {
@@ -15,7 +24,7 @@ const HandDisplay = ({ hand }) => {
             width={192}
             height={288}
             className="rounded shadow-sm"
-            style={{ marginLeft: idx === 0 ? 0 : -96 }} // overlap by 48px
+            style={{ marginLeft: idx === 0 ? 0 : -96 }}
           />
         );
       })}
