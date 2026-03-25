@@ -15,6 +15,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import GameControls from "@/components/GameControls";
 import HandDisplay from "@/components/HandDisplay";
+import CardCountDisplay from "@/components/CardCountDisplay";
+import BasicStrategyCheatSheet from "@/components/training/BasicStrategyCheatSheet";
 import { SessionInactivityDialog } from "@/components/SessionInactivityDialog";
 import { SessionStartPanel } from "@/components/SessionStartPanel";
 import { useBlackjackSession } from "@/hooks/use-blackjack-session";
@@ -41,6 +43,8 @@ function toSerializablePlayState(
     bankroll: playState.bankroll,
     currentBet: playState.currentBet,
     betPlaced: playState.betPlaced,
+    runningCount: playState.runningCount,
+    dealerPhasePending: playState.dealerPhasePending,
     deck: playState.deck,
     playerHands: playState.playerHands,
     dealerHand: playState.dealerHand,
@@ -65,6 +69,8 @@ export default function Home() {
   const dispatch = useDispatch();
   const playState = useSelector((state: RootState) => state.play);
   const settingsState = useSelector((state: RootState) => state.settings);
+  const showCount = settingsState.showCount;
+  const showHiddenCard = settingsState.showHiddenCard;
   const {
     activeSession,
     suspendedSession,
@@ -83,6 +89,10 @@ export default function Home() {
   const suspendBeaconSentRef = useRef(false);
   const hydratedSessionRef = useRef<string | null>(null);
   const sessionId = activeSession?.id ?? null;
+  const dealerHiddenCardIndices =
+    !playState.showDealerCards && !showHiddenCard && playState.dealerHand.length > 1
+      ? [1]
+      : [];
 
   const snapshotPayload = useMemo<BlackjackSessionSnapshotPayload>(
     () => ({
@@ -322,6 +332,12 @@ export default function Home() {
               <Card className="h-full bg-green-900 overflow-auto border-0">
                 <CardContent>
                   <div className="relative min-h-[60vh] w-full flex-grow m-auto flex items-center justify-center">
+                    <BasicStrategyCheatSheet />
+
+                    {showCount ? (
+                      <CardCountDisplay count={playState.runningCount} />
+                    ) : null}
+
                     {!sessionId ? (
                       <div className="absolute inset-0 z-20 flex items-center justify-center p-4">
                         <SessionStartPanel
@@ -338,7 +354,10 @@ export default function Home() {
 
                     <div className="absolute top-[5vh] dark:text-black">
                       <div className="flex space-x-2 p-2">
-                        <HandDisplay hand={playState.dealerHand} />
+                        <HandDisplay
+                          hand={playState.dealerHand}
+                          hiddenCardIndices={dealerHiddenCardIndices}
+                        />
                       </div>
                     </div>
 

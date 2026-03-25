@@ -2,6 +2,7 @@ import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { createDeck, shuffleDeck, dealInitialHands, dealCard, calculateHandScore, Card } from "@/components/utils/cardUtils";
 // createRiggedDeckForBlackjack
 import { Draft } from "immer";
+import { updateRunningCount } from "@/lib/cardCount";
 
 export enum GameResult {
   WIN = "WIN",
@@ -15,6 +16,8 @@ export interface PlayState {
   bankroll: number;
   currentBet: number;
   betPlaced: boolean;
+  runningCount: number;
+  dealerPhasePending: boolean;
   deck: Card[];
   playerHands: Card[][];
   dealerHand: Card[];
@@ -31,6 +34,8 @@ export const initialPlayState: PlayState = {
   bankroll: 1000,
   currentBet: 0,
   betPlaced: false,
+  runningCount: 0,
+  dealerPhasePending: false,
   deck: [],
   playerHands: [],
   dealerHand: [],
@@ -43,17 +48,30 @@ export const initialPlayState: PlayState = {
   blackjackHands: [],
 };
 
-
-function resolveDealerAndOutcomes(state: Draft<PlayState>) {
-  state.showDealerCards = true;
-
-  // Dealer draws until at least 17
-  while (state.dealerScore < 17 && state.deck.length > 0) {
-    const dealerCard = dealCard(state.deck);
-    state.dealerHand.push(dealerCard);
+function addRevealedCardToHand(
+  state: Draft<PlayState>,
+  target: "player" | "dealer",
+  card: Card,
+  handIndex = 0
+) {
+  if (target === "dealer") {
+    state.dealerHand.push(card);
     state.dealerScore = calculateHandScore(state.dealerHand);
+  } else {
+    state.playerHands[handIndex].push(card);
+    state.playerScores[handIndex] = calculateHandScore(state.playerHands[handIndex]);
   }
 
+  state.runningCount = updateRunningCount(state.runningCount, card);
+}
+
+
+function beginDealerTurn(state: Draft<PlayState>) {
+  state.showDealerCards = true;
+  state.dealerPhasePending = true;
+}
+
+function resolveDealerOutcomes(state: Draft<PlayState>) {
   // Evaluate each player's hand against the dealer and calculate payout
   state.playerScores.forEach((score, i) => {
     const isDoubled = state.doubledHands.includes(i);
@@ -105,6 +123,8 @@ function resolveDealerAndOutcomes(state: Draft<PlayState>) {
   state.betPlaced = false;
   state.currentBet = 0;
   state.doubledHands = [];
+  state.blackjackHands = [];
+  state.dealerPhasePending = false;
 }
 
 
@@ -131,20 +151,26 @@ const playSlice = createSlice({
 
       const numDecks = action.payload ?? 1;
       console.log("numDecks:", numDecks)
-      let deck = createDeck(numDecks);
-      // let deck = createRiggedDeckForBlackjack();
+      if (state.deck.length < 4) {
+        state.deck = shuffleDeck(createDeck(numDecks));
+        state.runningCount = 0;
+      }
 
-      deck = shuffleDeck(deck);
+      const { playerHand, dealerHand } = dealInitialHands(state.deck);
 
-      state.deck = deck;
+      state.playerHands = [[]];
+      state.dealerHand = [];
+      state.playerScores = [0];
+      state.dealerScore = 0;
+      state.showDealerCards = false;
+      state.dealerPhasePending = false;
+      state.blackjackHands = [];
+      state.doubledHands = [];
 
-      const { playerHand, dealerHand } = dealInitialHands(deck);
-
-      state.playerHands = [playerHand];
-      state.dealerHand = dealerHand;
-
-      state.playerScores = [calculateHandScore(playerHand)];
-      state.dealerScore = calculateHandScore(dealerHand);
+      addRevealedCardToHand(state, "player", playerHand[0], 0);
+      addRevealedCardToHand(state, "dealer", dealerHand[0]);
+      addRevealedCardToHand(state, "player", playerHand[1], 0);
+      addRevealedCardToHand(state, "dealer", dealerHand[1]);
 
       state.currentHandIndex = 0;
       state.endState = new Array(state.playerHands.length).fill(null);
@@ -179,9 +205,7 @@ const playSlice = createSlice({
       if (handIndex < 0 || handIndex >= state.playerHands.length) return;
 
       const card = dealCard(state.deck);
-      state.playerHands[handIndex].push(card);
-
-      state.playerScores[handIndex] = calculateHandScore(state.playerHands[handIndex]);
+      addRevealedCardToHand(state, "player", card, handIndex);
 
       // Check if busted
       if (state.playerScores[handIndex] > 21) {
@@ -192,7 +216,7 @@ const playSlice = createSlice({
         if (state.currentHandIndex < state.playerHands.length - 1) {
           state.currentHandIndex += 1;
         } else {
-          resolveDealerAndOutcomes(state);
+          beginDealerTurn(state);
 
           console.log("endState hit", JSON.parse(JSON.stringify(state.endState)));
         }
@@ -219,7 +243,7 @@ const playSlice = createSlice({
       if (state.currentHandIndex < state.playerHands.length - 1) {
         state.currentHandIndex += 1;
       } else {
-        resolveDealerAndOutcomes(state);
+        beginDealerTurn(state);
 
         console.log("endState stand", JSON.parse(JSON.stringify(state.endState)));
       }
@@ -236,8 +260,7 @@ const playSlice = createSlice({
       state.bankroll -= state.currentBet;
 
       const card = dealCard(state.deck);
-      state.playerHands[handIndex].push(card);
-      state.playerScores[handIndex] = calculateHandScore(state.playerHands[handIndex]);
+      addRevealedCardToHand(state, "player", card, handIndex);
 
       // Stand after double
       if (state.playerScores[handIndex] > 21) {
@@ -255,7 +278,7 @@ const playSlice = createSlice({
           state.doubledHands.push(handIndex);
         }
 
-        resolveDealerAndOutcomes(state);
+        beginDealerTurn(state);
         console.log("endState double", JSON.parse(JSON.stringify(state.endState)));
       }
     },
@@ -287,9 +310,11 @@ const playSlice = createSlice({
         const newHand2 = [secondCard, dealCard(state.deck)];
 
         // Insert new hands
-        state.playerHands.splice(handIndex, 0, newHand1, newHand2);
-        state.playerScores.splice(handIndex, 0, calculateHandScore(newHand1), calculateHandScore(newHand2));
+        state.playerHands.splice(handIndex, 0, [firstCard], [secondCard]);
+        state.playerScores.splice(handIndex, 0, calculateHandScore([firstCard]), calculateHandScore([secondCard]));
         state.endState.splice(handIndex, 0, null, null);
+        addRevealedCardToHand(state, "player", newHand1[1], handIndex);
+        addRevealedCardToHand(state, "player", newHand2[1], handIndex + 1);
 
         // Charge player for the second hand's bet
         state.bankroll -= state.currentBet;
@@ -311,8 +336,17 @@ const playSlice = createSlice({
       if (handIndex < state.playerHands.length - 1) {
         state.currentHandIndex += 1;
       } else {
-        resolveDealerAndOutcomes(state);
+        beginDealerTurn(state);
       }
+    },
+    dealerHitOne(state) {
+      if (!state.dealerPhasePending || state.deck.length === 0) return;
+
+      const dealerCard = dealCard(state.deck);
+      addRevealedCardToHand(state, "dealer", dealerCard);
+    },
+    finishDealerTurn(state) {
+      resolveDealerOutcomes(state);
     },
 
 
@@ -322,7 +356,11 @@ const playSlice = createSlice({
       }
     },
     hydratePlayState(_state, action: PayloadAction<PlayState>) {
-      return action.payload;
+      return {
+        ...action.payload,
+        runningCount: action.payload.runningCount ?? 0,
+        dealerPhasePending: action.payload.dealerPhasePending ?? false,
+      };
     },
     resetPlayState() {
       return initialPlayState;
@@ -338,6 +376,8 @@ export const {
   double,
   split,
   surrender,
+  dealerHitOne,
+  finishDealerTurn,
   setCurrentHandIndex,
   hydratePlayState,
   resetPlayState,

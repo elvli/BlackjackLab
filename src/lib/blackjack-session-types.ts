@@ -8,6 +8,8 @@ export type SerializablePlayState = {
   bankroll: number;
   currentBet: number;
   betPlaced: boolean;
+  runningCount: number;
+  dealerPhasePending: boolean;
   deck: SerializableCard[];
   playerHands: SerializableCard[][];
   dealerHand: SerializableCard[];
@@ -35,6 +37,7 @@ export type SerializableSettingsState = {
   showCount: boolean;
   showHiddenCard: boolean;
   showOptimalPlay: boolean;
+  dealerSpeed: number;
   startingBankroll: number;
   startingBet: number;
   bettingIncrement: number;

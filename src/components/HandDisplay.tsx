@@ -1,5 +1,8 @@
 import Image from "next/image";
 import { motion } from "framer-motion";
+import { useSelector } from "react-redux";
+import { RootState } from "@/app/store/store";
+import { getCardDealAnimationDuration } from "@/lib/dealer-speed";
 // import { useEffect, useRef } from "react";
 
 interface Card {
@@ -9,9 +12,16 @@ interface Card {
 
 interface HandDisplayProps {
   hand: Card[];
+  hiddenCardIndices?: number[];
 }
 
-const HandDisplay: React.FC<HandDisplayProps> = ({ hand }) => {
+const HandDisplay: React.FC<HandDisplayProps> = ({
+  hand,
+  hiddenCardIndices = [],
+}) => {
+  const dealerSpeed = useSelector((state: RootState) => state.settings.dealerSpeed);
+  const animationDuration = getCardDealAnimationDuration(dealerSpeed);
+
   // const prevHandLength = useRef(hand.length);
 
   // useEffect(() => {
@@ -27,13 +37,18 @@ const HandDisplay: React.FC<HandDisplayProps> = ({ hand }) => {
       {hand.map((card, idx) => {
         const suitLetter = card.suit[0];
         const cardCode = `${card.value}-${suitLetter}`;
+        const isHidden = hiddenCardIndices.includes(idx);
+        const imageSrc = isHidden ? "/cards/RedBack.png" : `/cards/${cardCode}.png`;
+        const altText = isHidden
+          ? "Face-down dealer card"
+          : `${card.value} of ${card.suit}`;
 
         return (
           <motion.div
             key={`${cardCode}-${idx}`}
-            initial={{ y: -50, opacity: 0 }}
+            initial={animationDuration === 0 ? false : { y: -20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
-            transition={{ type: "spring", stiffness: 300, damping: 20 }}
+            transition={{ duration: animationDuration, ease: "easeOut" }}
             style={{
               marginLeft: idx === 0 ? 0 : -96,
               width: 192,
@@ -42,8 +57,8 @@ const HandDisplay: React.FC<HandDisplayProps> = ({ hand }) => {
             className="relative overflow-hidden"
           >
             <Image
-              src={`/cards/${cardCode}.png`}
-              alt={`${card.value} of ${card.suit}`}
+              src={imageSrc}
+              alt={altText}
               width={192}
               height={288}
               className="object-cover"

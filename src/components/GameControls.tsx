@@ -1,11 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useDispatch, useSelector } from "react-redux";
-import { RootState } from "@/app/store/store";
+import { AppDispatch, RootState, store } from "@/app/store/store";
 import {
+  dealerHitOne,
+  finishDealerTurn,
   placeBet,
   startGame,
   hit,
@@ -40,12 +42,77 @@ const GameControls = ({
   sessionActive = false,
   onMove,
 }: GameControlsProps) => {
-  const dispatch = useDispatch();
-  const { bankroll, betPlaced, currentHandIndex, playerHands, currentBet } =
+  const dispatch = useDispatch<AppDispatch>();
+  const {
+    bankroll,
+    betPlaced,
+    currentHandIndex,
+    playerHands,
+    currentBet,
+    dealerPhasePending,
+  } =
     useSelector((state: RootState) => state.play);
-  const { numDecks } = useSelector((state: RootState) => state.settings);
+  const { numDecks, dealerSpeed } = useSelector((state: RootState) => state.settings);
 
   const [betAmount, setBetAmount] = useState(50);
+  const dealerTurnRunningRef = useRef(false);
+
+  useEffect(() => {
+    if (!sessionActive || !dealerPhasePending || dealerTurnRunningRef.current) {
+      return;
+    }
+
+    let cancelled = false;
+    dealerTurnRunningRef.current = true;
+
+    const delay = (ms: number) =>
+      new Promise((resolve) => window.setTimeout(resolve, ms));
+
+    const runDealerTurn = async () => {
+      while (!cancelled) {
+        const state = store.getState();
+        const { play, settings } = state;
+
+        if (!play.dealerPhasePending) {
+          break;
+        }
+
+        if (play.dealerScore >= 17 || play.deck.length === 0) {
+          dispatch(finishDealerTurn());
+          break;
+        }
+
+        if (settings.dealerSpeed > 0) {
+          await delay(settings.dealerSpeed);
+        }
+
+        if (cancelled) {
+          break;
+        }
+
+        const latestState = store.getState();
+
+        if (
+          !latestState.play.dealerPhasePending ||
+          latestState.play.dealerScore >= 17 ||
+          latestState.play.deck.length === 0
+        ) {
+          dispatch(finishDealerTurn());
+          break;
+        }
+
+        dispatch(dealerHitOne());
+      }
+    };
+
+    void runDealerTurn().finally(() => {
+      dealerTurnRunningRef.current = false;
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [dealerPhasePending, dealerSpeed, dispatch, sessionActive]);
 
   const handlePlaceBet = (amount: number) => {
     if (!sessionActive) return;
@@ -140,7 +207,7 @@ const GameControls = ({
           <Button
             variant="outline"
             className="h-full"
-            disabled={!sessionActive}
+            disabled={!sessionActive || dealerPhasePending}
             onClick={() => {
               dispatch(hit());
               handleMove("HIT");
@@ -151,7 +218,7 @@ const GameControls = ({
           <Button
             variant="outline"
             className="h-full"
-            disabled={!sessionActive}
+            disabled={!sessionActive || dealerPhasePending}
             onClick={() => {
               dispatch(stand());
               handleMove("STAND");
@@ -167,7 +234,7 @@ const GameControls = ({
           <Button
             variant="outline"
             className="h-full"
-            disabled={!sessionActive}
+            disabled={!sessionActive || dealerPhasePending}
             onClick={() => {
               dispatch(double());
               handleMove("DOUBLE");
@@ -183,7 +250,7 @@ const GameControls = ({
           <Button
             variant="outline"
             className="h-full"
-            disabled={!sessionActive}
+            disabled={!sessionActive || dealerPhasePending}
             onClick={() => {
               dispatch(split());
               handleMove("SPLIT");
@@ -194,7 +261,7 @@ const GameControls = ({
           <Button
             variant="outline"
             className="text-white border-0 bg-red-700 hover:text-gray-200 hover:bg-red-800 dark:border-1 dark:text-red-400 h-full"
-            disabled={!sessionActive}
+            disabled={!sessionActive || dealerPhasePending}
             onClick={() => {
               dispatch(surrender());
               handleMove("SURRENDER");
@@ -207,6 +274,11 @@ const GameControls = ({
           >
             Surrender
           </Button>
+          {dealerPhasePending ? (
+            <span className="inline-flex items-center text-sm text-muted-foreground">
+              Dealer playing...
+            </span>
+          ) : null}
         </div>
       )}
     </div>

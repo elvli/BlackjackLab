@@ -1,4 +1,5 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { DEALER_SPEED_DEFAULT } from "@/lib/dealer-speed";
 
 export interface SettingsState {
   // Game settings
@@ -18,6 +19,7 @@ export interface SettingsState {
   showCount: boolean;
   showHiddenCard: boolean;
   showOptimalPlay: boolean;
+  dealerSpeed: number;
 
   // Betting settings
   startingBankroll: number;
@@ -44,6 +46,7 @@ const initialState: SettingsState = {
   showCount: false,
   showHiddenCard: false,
   showOptimalPlay: false,
+  dealerSpeed: DEALER_SPEED_DEFAULT,
 
   // Betting settings
   startingBankroll: 1000,
@@ -107,6 +110,9 @@ const settingsSlice = createSlice({
     setShowOptimalPlay(state, action: PayloadAction<boolean>) {
       state.showOptimalPlay = action.payload;
     },
+    setDealerSpeed(state, action: PayloadAction<number>) {
+      state.dealerSpeed = action.payload;
+    },
 
     // Betting settings
     setStartingBankroll(state, action: PayloadAction<number>) {
@@ -144,6 +150,7 @@ export const {
   setShowCount,
   setShowHiddenCard,
   setShowOptimalPlay,
+  setDealerSpeed,
   setStartingBankroll,
   setStartingBet,
   setBettingIncrement,

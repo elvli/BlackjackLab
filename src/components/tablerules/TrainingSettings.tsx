@@ -4,6 +4,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "@/app/store/store";
 
 import {
+  setDealerSpeed,
   setShowCount,
   setShowHiddenCard,
   setShowOptimalPlay,
@@ -19,10 +20,11 @@ import {
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
+import DealerSpeedSlider from "@/components/training/DealerSpeedSlider";
 
 const TrainingSettings = () => {
   const dispatch = useDispatch();
-  const { showCount, showHiddenCard, showOptimalPlay } = useSelector(
+  const { showCount, showHiddenCard, showOptimalPlay, dealerSpeed } = useSelector(
     (state: RootState) => state.settings
   );
 
@@ -64,6 +66,12 @@ const TrainingSettings = () => {
                 />
                 <Label htmlFor="show-optimal-play">Show optimal play</Label>
               </div>
+              <Separator />
+
+              <DealerSpeedSlider
+                dealerSpeed={dealerSpeed}
+                setDealerSpeed={(value) => dispatch(setDealerSpeed(value))}
+              />
             </div>
           </SidebarMenuItem>
         </SidebarMenu>
