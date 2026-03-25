@@ -14,6 +14,9 @@ async function DesktopNavbar() {
 
       {user ? (
         <>
+          <Button variant="ghost" asChild>
+            <Link href="/sessions">Sessions</Link>
+          </Button>
           <Button variant="ghost" className="flex items-center gap-2" asChild>
             <Link
               href={`/profile/${

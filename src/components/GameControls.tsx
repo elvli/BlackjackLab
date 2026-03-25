@@ -17,15 +17,68 @@ import {
 
 import { Plus, Minus } from "lucide-react";
 
-const GameControls = () => {
+type GameControlsProps = {
+  sessionActive?: boolean;
+  onMove?: (move: {
+    type: LoggedMoveType;
+    handIndex?: number;
+    payload?: Record<string, unknown>;
+  }) => void;
+};
+
+type LoggedMoveType =
+  | "PLACE_BET"
+  | "START_HAND"
+  | "HIT"
+  | "STAND"
+  | "DOUBLE"
+  | "SPLIT"
+  | "SURRENDER"
+  | "END_HAND";
+
+const GameControls = ({
+  sessionActive = false,
+  onMove,
+}: GameControlsProps) => {
   const dispatch = useDispatch();
-  const { bankroll, betPlaced } = useSelector((state: RootState) => state.play);
+  const { bankroll, betPlaced, currentHandIndex, playerHands, currentBet } =
+    useSelector((state: RootState) => state.play);
+  const { numDecks } = useSelector((state: RootState) => state.settings);
 
   const [betAmount, setBetAmount] = useState(50);
 
   const handlePlaceBet = (amount: number) => {
+    if (!sessionActive) return;
+
     dispatch(placeBet(amount));
-    dispatch(startGame(1)); // Or however many decks you want
+    dispatch(startGame(numDecks));
+    onMove?.({
+      type: "PLACE_BET",
+      payload: {
+        amount,
+      },
+    });
+    onMove?.({
+      type: "START_HAND",
+      handIndex: 0,
+      payload: {
+        amount,
+        numDecks,
+      },
+    });
+  };
+
+  const handleMove = (type: LoggedMoveType) => {
+    if (!sessionActive) return;
+
+    onMove?.({
+      type,
+      handIndex: currentHandIndex,
+      payload: {
+        currentBet,
+        handSize: playerHands[currentHandIndex]?.length ?? 0,
+      },
+    });
   };
 
   return (
@@ -73,6 +126,7 @@ const GameControls = () => {
           <Button
             variant="outline"
             className="h-10"
+            disabled={!sessionActive}
             onClick={() => handlePlaceBet(betAmount)}
           >
             Place Bet
@@ -86,35 +140,70 @@ const GameControls = () => {
           <Button
             variant="outline"
             className="h-full"
-            onClick={() => dispatch(hit())}
+            disabled={!sessionActive}
+            onClick={() => {
+              dispatch(hit());
+              handleMove("HIT");
+            }}
           >
             Hit
           </Button>
           <Button
             variant="outline"
             className="h-full"
-            onClick={() => dispatch(stand())}
+            disabled={!sessionActive}
+            onClick={() => {
+              dispatch(stand());
+              handleMove("STAND");
+              onMove?.({
+                type: "END_HAND",
+                handIndex: currentHandIndex,
+                payload: { resolution: "stand" },
+              });
+            }}
           >
             Stand
           </Button>
           <Button
             variant="outline"
             className="h-full"
-            onClick={() => dispatch(double())}
+            disabled={!sessionActive}
+            onClick={() => {
+              dispatch(double());
+              handleMove("DOUBLE");
+              onMove?.({
+                type: "END_HAND",
+                handIndex: currentHandIndex,
+                payload: { resolution: "double" },
+              });
+            }}
           >
             Double
           </Button>
           <Button
             variant="outline"
             className="h-full"
-            onClick={() => dispatch(split())}
+            disabled={!sessionActive}
+            onClick={() => {
+              dispatch(split());
+              handleMove("SPLIT");
+            }}
           >
             Split
           </Button>
           <Button
             variant="outline"
             className="text-white border-0 bg-red-700 hover:text-gray-200 hover:bg-red-800 dark:border-1 dark:text-red-400 h-full"
-            onClick={() => dispatch(surrender())}
+            disabled={!sessionActive}
+            onClick={() => {
+              dispatch(surrender());
+              handleMove("SURRENDER");
+              onMove?.({
+                type: "END_HAND",
+                handIndex: currentHandIndex,
+                payload: { resolution: "surrender" },
+              });
+            }}
           >
             Surrender
           </Button>

@@ -1,5 +1,6 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { createDeck, shuffleDeck, dealInitialHands, dealCard, calculateHandScore, Card } from "@/components/utils/cardUtils";
+// createRiggedDeckForBlackjack
 import { Draft } from "immer";
 
 export enum GameResult {
@@ -10,7 +11,7 @@ export enum GameResult {
   BUST = "BUST",
 }
 
-interface PlayState {
+export interface PlayState {
   bankroll: number;
   currentBet: number;
   betPlaced: boolean;
@@ -19,13 +20,14 @@ interface PlayState {
   dealerHand: Card[];
   playerScores: number[];
   dealerScore: number;
+  showDealerCards: boolean;
   currentHandIndex: number;
   endState: (GameResult | null)[];
   doubledHands: number[];
   blackjackHands: number[];
 }
 
-const initialState: PlayState = {
+export const initialPlayState: PlayState = {
   bankroll: 1000,
   currentBet: 0,
   betPlaced: false,
@@ -34,6 +36,7 @@ const initialState: PlayState = {
   dealerHand: [],
   playerScores: [],
   dealerScore: 0,
+  showDealerCards: false,
   currentHandIndex: 0,
   endState: [],
   doubledHands: [],
@@ -42,6 +45,8 @@ const initialState: PlayState = {
 
 
 function resolveDealerAndOutcomes(state: Draft<PlayState>) {
+  state.showDealerCards = true;
+
   // Dealer draws until at least 17
   while (state.dealerScore < 17 && state.deck.length > 0) {
     const dealerCard = dealCard(state.deck);
@@ -105,7 +110,7 @@ function resolveDealerAndOutcomes(state: Draft<PlayState>) {
 
 const playSlice = createSlice({
   name: "play",
-  initialState,
+  initialState: initialPlayState,
   reducers: {
     placeBet(state, action: PayloadAction<number>) {
       const betAmount = action.payload;
@@ -123,8 +128,12 @@ const playSlice = createSlice({
         return;
       }
 
+
       const numDecks = action.payload ?? 1;
+      console.log("numDecks:", numDecks)
       let deck = createDeck(numDecks);
+      // let deck = createRiggedDeckForBlackjack();
+
       deck = shuffleDeck(deck);
 
       state.deck = deck;
@@ -139,6 +148,28 @@ const playSlice = createSlice({
 
       state.currentHandIndex = 0;
       state.endState = new Array(state.playerHands.length).fill(null);
+
+      // === New Blackjack Logic ===
+      const playerHasBlackjack = playerHand.length === 2 && state.playerScores[0] === 21;
+      const dealerHasBlackjack = dealerHand.length === 2 && state.dealerScore === 21;
+
+      if (playerHasBlackjack) {
+        if (dealerHasBlackjack) {
+          // Push
+          state.endState[0] = GameResult.PUSH;
+          state.bankroll += state.currentBet; // Refund bet
+        } else {
+          // Immediate Blackjack payout
+          state.endState[0] = GameResult.WIN;
+          state.bankroll += state.currentBet + state.currentBet * 1.5; // Original bet + 1.5x payout
+        }
+
+        state.blackjackHands.push(0); // Record this as a blackjack hand
+
+        // Reset bet state immediately
+        state.betPlaced = false;
+        state.currentBet = 0;
+      }
     },
 
 
@@ -290,9 +321,26 @@ const playSlice = createSlice({
         state.currentHandIndex = action.payload;
       }
     },
+    hydratePlayState(_state, action: PayloadAction<PlayState>) {
+      return action.payload;
+    },
+    resetPlayState() {
+      return initialPlayState;
+    },
   },
 });
 
-export const { placeBet, startGame, hit, stand, double, split, surrender, setCurrentHandIndex } = playSlice.actions;
+export const {
+  placeBet,
+  startGame,
+  hit,
+  stand,
+  double,
+  split,
+  surrender,
+  setCurrentHandIndex,
+  hydratePlayState,
+  resetPlayState,
+} = playSlice.actions;
 
 export default playSlice.reducer;

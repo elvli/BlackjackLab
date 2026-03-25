@@ -5,12 +5,12 @@
 // Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
 
 generator client {
-  provider = "prisma-client-js"
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
 }
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
 }
 
 model User {
@@ -22,48 +22,124 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  sessions Session[]
+  blackjackSessions BlackjackSession[]
 
   totalGames Int @default(0)
   wins       Int @default(0)
   losses     Int @default(0)
   pushes     Int @default(0)
+
+  settings Settings?
 }
 
-model Session {
+model Settings {
   id     String @id @default(cuid())
+  userId String @unique
   user   User   @relation(fields: [userId], references: [id])
-  userId String
 
-  createdAt DateTime @default(now())
-  isActive  Boolean  @default(true)
-  games     Game[]
+  // Game settings
+  numDecks           Int
+  numHands           Int
+  soft17             String
+  reshuffle          String
+  allowSurrender     Boolean
+  allowLateSurrender Boolean
+  allowDoubleSplit   Boolean
+  allowResplitAces   Boolean
+  allowInsurance     Boolean
+  bjPayout           String
+  shoePenetration    Float
+
+  // Training settings
+  showCount       Boolean
+  showHiddenCard  Boolean
+  showOptimalPlay Boolean
+
+  // Betting settings
+  startingBankroll Int
+  startingBet      Int
+  bettingIncrement Int
+  autoBet          Boolean
 }
 
-model Game {
-  id        String  @id @default(cuid())
-  session   Session @relation(fields: [sessionId], references: [id])
+model BlackjackSession {
+  id          String                 @id @default(cuid())
+  clerkUserId String
+  user        User                   @relation(fields: [clerkUserId], references: [clerkId])
+  startedAt   DateTime               @default(now())
+  updatedAt   DateTime               @updatedAt
+  lastActivityAt DateTime            @default(now())
+  endedAt     DateTime?
+  suspendedAt DateTime?
+  status      BlackjackSessionStatus @default(ACTIVE)
+
+  /// JSON keeps the current table rules attached to the session without
+  /// duplicating a wide set of relational columns on every snapshot row.
+  settingsSnapshot Json?
+
+  /// Summary stays flexible for future aggregate fields like win rate,
+  /// bankroll deltas, or review annotations.
+  summary Json?
+
+  moveCount     Int @default(0)
+  snapshotCount Int @default(0)
+
+  moves     BlackjackSessionMove[]
+  snapshots BlackjackSessionSnapshot[]
+
+  @@index([clerkUserId, status, updatedAt])
+  @@index([clerkUserId, startedAt])
+}
+
+model BlackjackSessionMove {
+  id        String                @id @default(cuid())
   sessionId String
+  session   BlackjackSession      @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  type      BlackjackMoveType
+  handIndex Int?
+  payload   Json?
+  createdAt DateTime              @default(now())
 
-  startedAt DateTime  @default(now())
-  endedAt   DateTime?
-
-  result       GameResult
-  playerMoves  Json
-  dealerHand   Json
-  playerHand   Json
-  balanceDelta Int
-  count        Int
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  @@index([sessionId, createdAt])
 }
 
-enum GameResult {
-  WIN
-  LOSE
-  PUSH
+model BlackjackSessionSnapshot {
+  id        String           @id @default(cuid())
+  sessionId String
+  session   BlackjackSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  type      SnapshotType     @default(TABLE_STATE)
+
+  /// We intentionally store snapshots as JSON because the table state is
+  /// nested and changes shape as new game mechanics are added. This keeps
+  /// resume/review practical without a heavy migration cost for each tweak.
+  payload   Json
+  createdAt DateTime         @default(now())
+
+  @@index([sessionId, createdAt])
+}
+
+enum BlackjackSessionStatus {
+  ACTIVE
+  SUSPENDED
+  ENDED
+}
+
+enum BlackjackMoveType {
+  START_SESSION
+  RESUME_SESSION
+  PLACE_BET
+  START_HAND
+  HIT
+  STAND
+  DOUBLE
+  SPLIT
   SURRENDER
-  BLACKJACK
-  BUST
+  INSURANCE
+  END_HAND
+  END_SESSION
+  SUSPEND_SESSION
+}
+
+enum SnapshotType {
+  TABLE_STATE
 }

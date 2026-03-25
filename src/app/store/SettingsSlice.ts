@@ -1,6 +1,6 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
-interface SettingsState {
+export interface SettingsState {
   // Game settings
   numDecks: number;
   numHands: number;
@@ -121,6 +121,9 @@ const settingsSlice = createSlice({
     setAutoBet(state, action: PayloadAction<boolean>) {
       state.autoBet = action.payload;
     },
+    hydrateSettingsState(_state, action: PayloadAction<SettingsState>) {
+      return action.payload;
+    },
   },
 });
 
@@ -145,6 +148,7 @@ export const {
   setStartingBet,
   setBettingIncrement,
   setAutoBet,
+  hydrateSettingsState,
 } = settingsSlice.actions;
 
 export default settingsSlice.reducer;

@@ -56,6 +56,13 @@ function MobileNavbar() {
                   className="flex items-center gap-3 justify-start"
                   asChild
                 >
+                  <Link href="/sessions">Sessions</Link>
+                </Button>
+                <Button
+                  variant="ghost"
+                  className="flex items-center gap-3 justify-start"
+                  asChild
+                >
                   <Link href="/profile">
                     <UserIcon className="w-4 h-4" />
                     Profile
