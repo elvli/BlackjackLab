@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "@/app/store/store";
 
@@ -99,24 +99,19 @@ const GameSettings = () => {
   );
 
   const [draftSettings, setDraftSettings] =
-    useState<GameSettingsDraft>(currentSettings);
+    useState<GameSettingsDraft | null>(null);
   const [isConfirmationOpen, setIsConfirmationOpen] = useState(false);
-
-  useEffect(() => {
-    if (!isConfirmationOpen) {
-      setDraftSettings(currentSettings);
-    }
-  }, [currentSettings, isConfirmationOpen]);
+  const resolvedDraftSettings = draftSettings ?? currentSettings;
 
   const hasPendingChanges =
-    JSON.stringify(draftSettings) !== JSON.stringify(currentSettings);
+    JSON.stringify(resolvedDraftSettings) !== JSON.stringify(currentSettings);
 
   const updateDraftSetting = <K extends keyof GameSettingsDraft>(
     key: K,
     value: GameSettingsDraft[K]
   ) => {
     setDraftSettings((currentDraft) => ({
-      ...currentDraft,
+      ...(currentDraft ?? currentSettings),
       [key]: value,
     }));
   };
@@ -127,33 +122,34 @@ const GameSettings = () => {
     switch (behavior) {
       case "start-new-session":
         // Placeholder for future session split behavior.
-        dispatch(setNumDecks(draftSettings.numDecks));
-        dispatch(setSoft17(draftSettings.soft17));
-        dispatch(setReshuffle(draftSettings.reshuffle));
-        dispatch(setAllowSurrender(draftSettings.allowSurrender));
-        dispatch(setAllowLateSurrender(draftSettings.allowLateSurrender));
-        dispatch(setAllowDoubleSplit(draftSettings.allowDoubleSplit));
-        dispatch(setAllowResplitAces(draftSettings.allowResplitAces));
-        dispatch(setAllowInsurance(draftSettings.allowInsurance));
-        dispatch(setBjPayout(draftSettings.bjPayout));
-        dispatch(setShoePenetration(draftSettings.shoePenetration));
+        dispatch(setNumDecks(resolvedDraftSettings.numDecks));
+        dispatch(setSoft17(resolvedDraftSettings.soft17));
+        dispatch(setReshuffle(resolvedDraftSettings.reshuffle));
+        dispatch(setAllowSurrender(resolvedDraftSettings.allowSurrender));
+        dispatch(setAllowLateSurrender(resolvedDraftSettings.allowLateSurrender));
+        dispatch(setAllowDoubleSplit(resolvedDraftSettings.allowDoubleSplit));
+        dispatch(setAllowResplitAces(resolvedDraftSettings.allowResplitAces));
+        dispatch(setAllowInsurance(resolvedDraftSettings.allowInsurance));
+        dispatch(setBjPayout(resolvedDraftSettings.bjPayout));
+        dispatch(setShoePenetration(resolvedDraftSettings.shoePenetration));
         break;
       case "continue-current-session":
-        dispatch(setNumDecks(draftSettings.numDecks));
-        dispatch(setSoft17(draftSettings.soft17));
-        dispatch(setReshuffle(draftSettings.reshuffle));
-        dispatch(setAllowSurrender(draftSettings.allowSurrender));
-        dispatch(setAllowLateSurrender(draftSettings.allowLateSurrender));
-        dispatch(setAllowDoubleSplit(draftSettings.allowDoubleSplit));
-        dispatch(setAllowResplitAces(draftSettings.allowResplitAces));
-        dispatch(setAllowInsurance(draftSettings.allowInsurance));
-        dispatch(setBjPayout(draftSettings.bjPayout));
-        dispatch(setShoePenetration(draftSettings.shoePenetration));
+        dispatch(setNumDecks(resolvedDraftSettings.numDecks));
+        dispatch(setSoft17(resolvedDraftSettings.soft17));
+        dispatch(setReshuffle(resolvedDraftSettings.reshuffle));
+        dispatch(setAllowSurrender(resolvedDraftSettings.allowSurrender));
+        dispatch(setAllowLateSurrender(resolvedDraftSettings.allowLateSurrender));
+        dispatch(setAllowDoubleSplit(resolvedDraftSettings.allowDoubleSplit));
+        dispatch(setAllowResplitAces(resolvedDraftSettings.allowResplitAces));
+        dispatch(setAllowInsurance(resolvedDraftSettings.allowInsurance));
+        dispatch(setBjPayout(resolvedDraftSettings.bjPayout));
+        dispatch(setShoePenetration(resolvedDraftSettings.shoePenetration));
         break;
       default:
         break;
     }
 
+    setDraftSettings(null);
     setIsConfirmationOpen(false);
   };
 
@@ -168,7 +164,7 @@ const GameSettings = () => {
                 <ToggleGroup
                   id="numDecks"
                   type="single"
-                  value={String(draftSettings.numDecks)}
+                  value={String(resolvedDraftSettings.numDecks)}
                   onValueChange={(value) => {
                     if (!value) return;
                     updateDraftSetting("numDecks", Number(value));
@@ -188,7 +184,7 @@ const GameSettings = () => {
                 <Separator />
 
                 <RadioGroup
-                  value={draftSettings.soft17}
+                  value={resolvedDraftSettings.soft17}
                   onValueChange={(value) => updateDraftSetting("soft17", value)}
                 >
                   <div className="flex items-center space-x-2">
@@ -204,7 +200,7 @@ const GameSettings = () => {
 
                 <Label htmlFor="shuffle-type">Reshuffle type</Label>
                 <RadioGroup
-                  value={draftSettings.reshuffle}
+                  value={resolvedDraftSettings.reshuffle}
                   onValueChange={(value) =>
                     updateDraftSetting("reshuffle", value)
                   }
@@ -226,7 +222,7 @@ const GameSettings = () => {
                 <div id="surrender" className="flex items-center space-x-2">
                   <Switch
                     id="allow-surrender"
-                    checked={draftSettings.allowSurrender}
+                    checked={resolvedDraftSettings.allowSurrender}
                     onCheckedChange={(checked) =>
                       updateDraftSetting("allowSurrender", checked)
                     }
@@ -237,7 +233,7 @@ const GameSettings = () => {
                 <div className="flex items-center space-x-2">
                   <Switch
                     id="allow-late-surrenderr"
-                    checked={draftSettings.allowLateSurrender}
+                    checked={resolvedDraftSettings.allowLateSurrender}
                     onCheckedChange={(checked) =>
                       updateDraftSetting("allowLateSurrender", checked)
                     }
@@ -251,7 +247,7 @@ const GameSettings = () => {
                 <div className="flex items-center space-x-2 mt-2">
                   <Switch
                     id="double-split"
-                    checked={draftSettings.allowDoubleSplit}
+                    checked={resolvedDraftSettings.allowDoubleSplit}
                     onCheckedChange={(checked) =>
                       updateDraftSetting("allowDoubleSplit", checked)
                     }
@@ -261,7 +257,7 @@ const GameSettings = () => {
                 <div className="flex items-center space-x-2 mt-2">
                   <Switch
                     id="resplit-aces"
-                    checked={draftSettings.allowResplitAces}
+                    checked={resolvedDraftSettings.allowResplitAces}
                     onCheckedChange={(checked) =>
                       updateDraftSetting("allowResplitAces", checked)
                     }
@@ -273,7 +269,7 @@ const GameSettings = () => {
                 <div className="flex items-center space-x-2">
                   <Switch
                     id="offer-insurance"
-                    checked={draftSettings.allowInsurance}
+                    checked={resolvedDraftSettings.allowInsurance}
                     onCheckedChange={(checked) =>
                       updateDraftSetting("allowInsurance", checked)
                     }
@@ -285,7 +281,7 @@ const GameSettings = () => {
                 <Label htmlFor="bjpayout">Blackjack payout</Label>
                 <RadioGroup
                   id="bjpayout"
-                  value={draftSettings.bjPayout}
+                  value={resolvedDraftSettings.bjPayout}
                   onValueChange={(value) =>
                     updateDraftSetting("bjPayout", value)
                   }
@@ -314,7 +310,7 @@ const GameSettings = () => {
                     [appearance:textfield] 
                     [&::-webkit-outer-spin-button]:appearance-none 
                     [&::-webkit-inner-spin-button]:appearance-none"
-                    value={Math.round(draftSettings.shoePenetration * 100)}
+                    value={Math.round(resolvedDraftSettings.shoePenetration * 100)}
                     onChange={(e) => {
                       const nextValue = Number(e.target.value) / 100;
                       if (Number.isNaN(nextValue)) return;
@@ -344,6 +340,10 @@ const GameSettings = () => {
       <Dialog
         open={isConfirmationOpen}
         onOpenChange={(open) => {
+          if (!open) {
+            setDraftSettings(null);
+          }
+
           if (open || hasPendingChanges) {
             setIsConfirmationOpen(open);
           }

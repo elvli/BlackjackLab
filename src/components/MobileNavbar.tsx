@@ -8,6 +8,8 @@ import {
   UserIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useTheme } from "@/components/theme-provider";
+import { getProfilePath } from "@/lib/profile-path";
 import {
   Sheet,
   SheetContent,
@@ -16,13 +18,13 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { useState } from "react";
-import { useAuth, SignInButton, SignOutButton } from "@clerk/nextjs";
-import { useTheme } from "next-themes";
+import { useAuth, SignInButton, SignOutButton, useUser } from "@clerk/nextjs";
 import Link from "next/link";
 
 function MobileNavbar() {
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const { isSignedIn } = useAuth();
+  const { user } = useUser();
   const { theme, setTheme } = useTheme();
 
   return (
@@ -63,7 +65,12 @@ function MobileNavbar() {
                   className="flex items-center gap-3 justify-start"
                   asChild
                 >
-                  <Link href="/profile">
+                  <Link
+                    href={getProfilePath({
+                      username: user?.username,
+                      emailAddress: user?.emailAddresses[0]?.emailAddress,
+                    })}
+                  >
                     <UserIcon className="w-4 h-4" />
                     Profile
                   </Link>

@@ -1,12 +1,22 @@
+"use client";
+
 import { UserIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { SignInButton, UserButton } from "@clerk/nextjs";
+import { SignInButton, UserButton, useUser } from "@clerk/nextjs";
 import ModeToggle from "./ModeToggle";
-import { currentUser } from "@clerk/nextjs/server";
+import { getProfilePath } from "@/lib/profile-path";
 
-async function DesktopNavbar() {
-  const user = await currentUser();
+function DesktopNavbar() {
+  const { user, isLoaded } = useUser();
+
+  if (!isLoaded) {
+    return (
+      <div className="hidden md:flex items-center space-x-4">
+        <ModeToggle />
+      </div>
+    );
+  }
 
   return (
     <div className="hidden md:flex items-center space-x-4">
@@ -19,10 +29,10 @@ async function DesktopNavbar() {
           </Button>
           <Button variant="ghost" className="flex items-center gap-2" asChild>
             <Link
-              href={`/profile/${
-                user.username ??
-                user.emailAddresses[0].emailAddress.split("@")[0]
-              }`}
+              href={getProfilePath({
+                username: user.username,
+                emailAddress: user.emailAddresses[0]?.emailAddress,
+              })}
             >
               <UserIcon className="w-4 h-4" />
               <span className="hidden lg:inline">Profile</span>

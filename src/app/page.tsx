@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef } from "react";
-import { SignInButton, SignedIn, SignedOut } from "@clerk/nextjs";
+import { SignInButton, useAuth } from "@clerk/nextjs";
 import { useDispatch, useSelector } from "react-redux";
 
 import { RootState } from "@/app/store/store";
@@ -61,6 +61,7 @@ function toSerializableSettingsState(
 }
 
 export default function Home() {
+  const { isSignedIn } = useAuth();
   const dispatch = useDispatch();
   const playState = useSelector((state: RootState) => state.play);
   const settingsState = useSelector((state: RootState) => state.settings);
@@ -275,7 +276,7 @@ export default function Home() {
 
   return (
     <>
-      <SignedOut>
+      {!isSignedIn ? (
         <div className="flex h-full items-center justify-center p-6">
           <Card className="max-w-lg">
             <CardContent className="space-y-4 p-6 text-center">
@@ -290,102 +291,107 @@ export default function Home() {
             </CardContent>
           </Card>
         </div>
-      </SignedOut>
+      ) : null}
 
-      <SignedIn>
-        <div className="relative h-screen overflow-hidden p-4 flex flex-col">
-          <div className="mb-3 flex items-center justify-between gap-3">
-            <div>
-              <p className="text-sm text-muted-foreground">
-                {sessionId
-                  ? `Session ${sessionId.slice(0, 8)} is active.`
-                  : "Start a session to save moves, cards, and table state."}
-              </p>
+      {isSignedIn ? (
+        <>
+          <div className="relative h-screen overflow-hidden p-4 flex flex-col">
+            <div className="mb-3 flex items-center justify-between gap-3">
+              <div>
+                <p className="text-sm text-muted-foreground">
+                  {sessionId
+                    ? `Session ${sessionId.slice(0, 8)} is active.`
+                    : "Start a session to save moves, cards, and table state."}
+                </p>
+              </div>
+
+              {sessionId ? (
+                <Button variant="outline" onClick={() => void handleEndSession()}>
+                  End Session
+                </Button>
+              ) : null}
             </div>
 
-            {sessionId ? (
-              <Button variant="outline" onClick={() => void handleEndSession()}>
-                End Session
-              </Button>
+            {error ? (
+              <div className="mb-3 rounded-md border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-700">
+                {error}
+              </div>
             ) : null}
-          </div>
 
-          {error ? (
-            <div className="mb-3 rounded-md border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-700">
-              {error}
-            </div>
-          ) : null}
-
-          <div className="flex-1 overflow-hidden">
-            <Card className="h-full bg-green-900 overflow-auto border-0">
-              <CardContent>
-                <div className="relative min-h-[60vh] w-full flex-grow m-auto flex items-center justify-center">
-                  {!sessionId ? (
-                    <div className="absolute inset-0 z-20 flex items-center justify-center p-4">
-                      <SessionStartPanel
-                        isLoading={isLoading}
-                        isMutating={isMutating}
-                        suspendedSession={suspendedSession}
-                        onStartSession={() => void handleStartSession()}
-                        onResumeSession={(targetSessionId) =>
-                          void handleResumeSession(targetSessionId)
-                        }
-                      />
-                    </div>
-                  ) : null}
-
-                  <div className="absolute top-[5vh] dark:text-black">
-                    <div className="flex space-x-2 p-2">
-                      <HandDisplay hand={playState.dealerHand} />
-                    </div>
-                  </div>
-
-                  {getAngles(playState.playerHands.length).map((deg, i) => {
-                    const angle = (deg * Math.PI) / 180;
-                    const radius = 280;
-                    const x = Math.cos(angle) * radius;
-                    const y = Math.sin(angle) * radius + 60;
-
-                    return (
-                      <div
-                        key={i}
-                        className="absolute rounded-lg dark:text-black mt-14 lg:mt-20 w-max text-center"
-                        style={{
-                          top: `calc(10vh + ${y}px)`,
-                          left: `calc(50% + ${x}px)`,
-                          transform: "translate(-50%, -50%)",
-                        }}
-                      >
-                        <div className="flex flex-col items-center p-2">
-                          <span
-                            className={`bg-white font-semibold rounded-md p-2 mb-2 shadow animate-border-pulse ${
-                              i === playState.currentHandIndex
-                                ? "border-4 border-blue-500"
-                                : ""
-                            }`}
-                          >
-                            Hand {i + 1} (Score: {playState.playerScores[i] ?? 0})
-                          </span>
-
-                          <HandDisplay hand={playState.playerHands[i]} />
-                        </div>
+            <div className="flex-1 overflow-hidden">
+              <Card className="h-full bg-green-900 overflow-auto border-0">
+                <CardContent>
+                  <div className="relative min-h-[60vh] w-full flex-grow m-auto flex items-center justify-center">
+                    {!sessionId ? (
+                      <div className="absolute inset-0 z-20 flex items-center justify-center p-4">
+                        <SessionStartPanel
+                          isLoading={isLoading}
+                          isMutating={isMutating}
+                          suspendedSession={suspendedSession}
+                          onStartSession={() => void handleStartSession()}
+                          onResumeSession={(targetSessionId) =>
+                            void handleResumeSession(targetSessionId)
+                          }
+                        />
                       </div>
-                    );
-                  })}
-                </div>
-              </CardContent>
-            </Card>
+                    ) : null}
+
+                    <div className="absolute top-[5vh] dark:text-black">
+                      <div className="flex space-x-2 p-2">
+                        <HandDisplay hand={playState.dealerHand} />
+                      </div>
+                    </div>
+
+                    {getAngles(playState.playerHands.length).map((deg, i) => {
+                      const angle = (deg * Math.PI) / 180;
+                      const radius = 280;
+                      const x = Math.cos(angle) * radius;
+                      const y = Math.sin(angle) * radius + 60;
+
+                      return (
+                        <div
+                          key={i}
+                          className="absolute rounded-lg dark:text-black mt-14 lg:mt-20 w-max text-center"
+                          style={{
+                            top: `calc(10vh + ${y}px)`,
+                            left: `calc(50% + ${x}px)`,
+                            transform: "translate(-50%, -50%)",
+                          }}
+                        >
+                          <div className="flex flex-col items-center p-2">
+                            <span
+                              className={`bg-white font-semibold rounded-md p-2 mb-2 shadow animate-border-pulse ${
+                                i === playState.currentHandIndex
+                                  ? "border-4 border-blue-500"
+                                  : ""
+                              }`}
+                            >
+                              Hand {i + 1} (Score: {playState.playerScores[i] ?? 0})
+                            </span>
+
+                            <HandDisplay hand={playState.playerHands[i]} />
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            <GameControls
+              sessionActive={Boolean(sessionId)}
+              onMove={handleMove}
+            />
           </div>
 
-          <GameControls sessionActive={Boolean(sessionId)} onMove={handleMove} />
-        </div>
-
-        <SessionInactivityDialog
-          open={Boolean(sessionId) && isIdle}
-          onContinue={() => void handleContinueSession()}
-          onEnd={() => void handleEndSession("inactive-timeout")}
-        />
-      </SignedIn>
+          <SessionInactivityDialog
+            open={Boolean(sessionId) && isIdle}
+            onContinue={() => void handleContinueSession()}
+            onEnd={() => void handleEndSession("inactive-timeout")}
+          />
+        </>
+      ) : null}
     </>
   );
 }
