@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 
+import { cn } from "@/lib/utils";
 import {
   basicStrategySections,
   dealerHeaders,
@@ -29,12 +30,18 @@ function getCellClasses(code: StrategyCode) {
   return "bg-rose-300/90 text-rose-950";
 }
 
-export default function BasicStrategyCheatSheet() {
+type BasicStrategyCheatSheetProps = {
+  className?: string;
+};
+
+export default function BasicStrategyCheatSheet({
+  className,
+}: BasicStrategyCheatSheetProps) {
   const [isExpanded, setIsExpanded] = useState(true);
 
   if (!isExpanded) {
     return (
-      <div className="absolute top-4 left-4 z-10">
+      <div className={className}>
         <button
           type="button"
           onClick={() => setIsExpanded(true)}
@@ -47,7 +54,12 @@ export default function BasicStrategyCheatSheet() {
   }
 
   return (
-    <div className="absolute top-4 left-4 z-10 w-[min(30rem,calc(100%-2rem))] rounded-xl border border-white/15 bg-black/55 text-white shadow-xl backdrop-blur-sm">
+    <div
+      className={cn(
+        "w-[min(30rem,calc(100vw-2rem))] rounded-xl border border-white/15 bg-black/55 text-white shadow-xl backdrop-blur-sm",
+        className
+      )}
+    >
       <div className="flex items-center justify-between gap-3 border-b border-white/10 px-3 py-2">
         <div>
           <p className="text-sm font-semibold">Basic Strategy</p>

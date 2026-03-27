@@ -1,7 +1,10 @@
 "use client";
 
+import { cn } from "@/lib/utils";
+
 type CardCountDisplayProps = {
   count: number;
+  className?: string;
 };
 
 function getCountTone(count: number) {
@@ -18,11 +21,17 @@ function getCountTone(count: number) {
 
 export default function CardCountDisplay({
   count,
+  className,
 }: CardCountDisplayProps) {
   const formattedCount = count > 0 ? `+${count}` : `${count}`;
 
   return (
-    <div className="absolute top-4 right-4 z-10 rounded-full border border-white/15 bg-black/55 px-3 py-1.5 text-sm font-semibold shadow-lg backdrop-blur-sm">
+    <div
+      className={cn(
+        "rounded-full border border-white/15 bg-black/55 px-3 py-1.5 text-sm font-semibold shadow-lg backdrop-blur-sm",
+        className
+      )}
+    >
       <span className="text-slate-200">Count: </span>
       <span className={getCountTone(count)}>{formattedCount}</span>
     </div>

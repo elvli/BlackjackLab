@@ -14,11 +14,13 @@ import { hydrateSettingsState } from "@/app/store/SettingsSlice";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import GameControls from "@/components/GameControls";
-import HandDisplay from "@/components/HandDisplay";
 import CardCountDisplay from "@/components/CardCountDisplay";
 import BasicStrategyCheatSheet from "@/components/training/BasicStrategyCheatSheet";
 import { SessionInactivityDialog } from "@/components/SessionInactivityDialog";
 import { SessionStartPanel } from "@/components/SessionStartPanel";
+import BlackjackTableLayout from "@/components/table/BlackjackTableLayout";
+import CardFan from "@/components/table/CardFan";
+import HandArea from "@/components/table/HandArea";
 import { useBlackjackSession } from "@/hooks/use-blackjack-session";
 import { useInactivityTimeout } from "@/hooks/use-inactivity-timeout";
 import {
@@ -26,15 +28,6 @@ import {
   SerializablePlayState,
   SerializableSettingsState,
 } from "@/lib/blackjack-session-types";
-
-function getAngles(n: number) {
-  if (n === 1) return [90];
-  if (n === 2) return [65, 115];
-  const start = 40;
-  const end = 140;
-  const step = (end - start) / (n - 1);
-  return Array.from({ length: n }, (_, i) => start + i * step);
-}
 
 function toSerializablePlayState(
   playState: RootState["play"]
@@ -284,6 +277,13 @@ export default function Home() {
     resetInactivityTimer();
   };
 
+  const visibleDealerScore =
+    dealerHiddenCardIndices.length > 0 ? "?" : playState.dealerScore;
+  const activeHandLabel =
+    playState.playerHands.length > 0
+      ? `Playing hand ${playState.currentHandIndex + 1} of ${playState.playerHands.length}`
+      : "Place a bet to start the next hand.";
+
   return (
     <>
       {!isSignedIn ? (
@@ -329,17 +329,71 @@ export default function Home() {
             ) : null}
 
             <div className="flex-1 overflow-hidden">
-              <Card className="h-full bg-green-900 overflow-auto border-0">
-                <CardContent>
-                  <div className="relative min-h-[60vh] w-full flex-grow m-auto flex items-center justify-center">
-                    <BasicStrategyCheatSheet />
-
-                    {showCount ? (
-                      <CardCountDisplay count={playState.runningCount} />
-                    ) : null}
-
-                    {!sessionId ? (
-                      <div className="absolute inset-0 z-20 flex items-center justify-center p-4">
+              <Card className="h-full overflow-hidden border-0 bg-green-900">
+                <CardContent className="h-full p-3 sm:p-4 lg:p-5">
+                  <BlackjackTableLayout
+                    overlayLeft={<BasicStrategyCheatSheet />}
+                    overlayRight={
+                      showCount ? <CardCountDisplay count={playState.runningCount} /> : null
+                    }
+                    centerArea={
+                      <div className="flex flex-col items-center gap-2 text-center">
+                        <div className="rounded-full border border-white/15 bg-black/25 px-4 py-2 text-sm font-medium text-white shadow-sm backdrop-blur-sm">
+                          {playState.dealerPhasePending ? "Dealer is playing..." : activeHandLabel}
+                        </div>
+                        {playState.betPlaced ? (
+                          <p className="text-xs text-white/75 sm:text-sm">
+                            Current bet: ${playState.currentBet}
+                          </p>
+                        ) : (
+                          <p className="text-xs text-white/70 sm:text-sm">
+                            Start a hand and the active player zone will stay centered here.
+                          </p>
+                        )}
+                      </div>
+                    }
+                    dealerArea={
+                      <HandArea
+                        title={`Dealer${playState.dealerHand.length ? ` (Score: ${visibleDealerScore})` : ""}`}
+                      >
+                        <div className="w-full max-w-3xl">
+                          <CardFan
+                            hand={playState.dealerHand}
+                            hiddenCardIndices={dealerHiddenCardIndices}
+                          />
+                        </div>
+                      </HandArea>
+                    }
+                    playerArea={
+                      <div className="grid w-full grid-cols-[repeat(auto-fit,minmax(min(100%,16rem),1fr))] gap-4 sm:gap-5 lg:gap-6">
+                        {playState.playerHands.map((hand, i) => (
+                          <HandArea
+                            key={`${i}-${hand.length}`}
+                            title={`Hand ${i + 1} (Score: ${playState.playerScores[i] ?? 0})`}
+                            subtitle={
+                              i === playState.currentHandIndex
+                                ? "Active hand"
+                                : playState.endState[i]
+                                  ? `Result: ${playState.endState[i]}`
+                                  : undefined
+                            }
+                            active={i === playState.currentHandIndex}
+                          >
+                            <div className="w-full max-w-sm">
+                              <CardFan hand={hand} />
+                            </div>
+                          </HandArea>
+                        ))}
+                      </div>
+                    }
+                    controls={
+                      <GameControls
+                        sessionActive={Boolean(sessionId)}
+                        onMove={handleMove}
+                      />
+                    }
+                    modalOverlay={
+                      !sessionId ? (
                         <SessionStartPanel
                           isLoading={isLoading}
                           isMutating={isMutating}
@@ -349,59 +403,12 @@ export default function Home() {
                             void handleResumeSession(targetSessionId)
                           }
                         />
-                      </div>
-                    ) : null}
-
-                    <div className="absolute top-[5vh] dark:text-black">
-                      <div className="flex space-x-2 p-2">
-                        <HandDisplay
-                          hand={playState.dealerHand}
-                          hiddenCardIndices={dealerHiddenCardIndices}
-                        />
-                      </div>
-                    </div>
-
-                    {getAngles(playState.playerHands.length).map((deg, i) => {
-                      const angle = (deg * Math.PI) / 180;
-                      const radius = 280;
-                      const x = Math.cos(angle) * radius;
-                      const y = Math.sin(angle) * radius + 60;
-
-                      return (
-                        <div
-                          key={i}
-                          className="absolute rounded-lg dark:text-black mt-14 lg:mt-20 w-max text-center"
-                          style={{
-                            top: `calc(10vh + ${y}px)`,
-                            left: `calc(50% + ${x}px)`,
-                            transform: "translate(-50%, -50%)",
-                          }}
-                        >
-                          <div className="flex flex-col items-center p-2">
-                            <span
-                              className={`bg-white font-semibold rounded-md p-2 mb-2 shadow animate-border-pulse ${
-                                i === playState.currentHandIndex
-                                  ? "border-4 border-blue-500"
-                                  : ""
-                              }`}
-                            >
-                              Hand {i + 1} (Score: {playState.playerScores[i] ?? 0})
-                            </span>
-
-                            <HandDisplay hand={playState.playerHands[i]} />
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
+                      ) : null
+                    }
+                  />
                 </CardContent>
               </Card>
             </div>
-
-            <GameControls
-              sessionActive={Boolean(sessionId)}
-              onMove={handleMove}
-            />
           </div>
 
           <SessionInactivityDialog

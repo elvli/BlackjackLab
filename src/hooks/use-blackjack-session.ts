@@ -21,6 +21,10 @@ async function readJson<T>(response: Response): Promise<T> {
   return (await response.json()) as T;
 }
 
+function isSessionLifecycleRaceError(error: unknown) {
+  return error instanceof Error && error.message === "Session not found";
+}
+
 export function useBlackjackSession() {
   const [activeSession, setActiveSession] =
     useState<BlackjackSessionSummaryDto | null>(null);
@@ -143,41 +147,68 @@ export function useBlackjackSession() {
   }, []);
 
   const touchSession = useCallback(async (sessionId: string) => {
-    await readJson(
-      await fetch(`/api/blackjack-sessions/${sessionId}/touch`, {
-        method: "POST",
-      })
-    );
+    try {
+      await readJson(
+        await fetch(`/api/blackjack-sessions/${sessionId}/touch`, {
+          method: "POST",
+        })
+      );
+    } catch (err) {
+      if (isSessionLifecycleRaceError(err)) {
+        setActiveSession(null);
+        return;
+      }
+
+      throw err;
+    }
   }, []);
 
   const logMove = useCallback(async (
     sessionId: string,
     move: Omit<BlackjackMovePayload, "sessionId">
   ) => {
-    await readJson(
-      await fetch(`/api/blackjack-sessions/${sessionId}/moves`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(move),
-      })
-    );
+    try {
+      await readJson(
+        await fetch(`/api/blackjack-sessions/${sessionId}/moves`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(move),
+        })
+      );
+    } catch (err) {
+      if (isSessionLifecycleRaceError(err)) {
+        setActiveSession(null);
+        return;
+      }
+
+      throw err;
+    }
   }, []);
 
   const logSnapshot = useCallback(async (
     sessionId: string,
     payload: BlackjackSessionSnapshotPayload
   ) => {
-    await readJson(
-      await fetch(`/api/blackjack-sessions/${sessionId}/snapshots`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ payload }),
-      })
-    );
+    try {
+      await readJson(
+        await fetch(`/api/blackjack-sessions/${sessionId}/snapshots`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ payload }),
+        })
+      );
+    } catch (err) {
+      if (isSessionLifecycleRaceError(err)) {
+        setActiveSession(null);
+        return;
+      }
+
+      throw err;
+    }
   }, []);
 
   return {

@@ -149,21 +149,19 @@ const GameControls = ({
   };
 
   return (
-    <div className="mt-4 text-center min-h-[48px]">
-      {" "}
-      {/* adjust 56px to match your tallest content */}
+    <div className="mx-auto w-full max-w-5xl text-center text-white">
       {!betPlaced ? (
-        <div className="flex gap-2 justify-center items-center h-full">
-          <div className="inline-flex rounded-md overflow-hidden border border-gray-300 text-sm font-medium h-10">
-            <div className="bg-gray-200 px-3 py-2 text-gray-700 flex items-center h-full">
+        <div className="flex flex-wrap items-center justify-center gap-3 rounded-2xl border border-white/10 bg-black/20 px-3 py-3 backdrop-blur-sm sm:px-4">
+          <div className="inline-flex h-10 overflow-hidden rounded-md border border-gray-300 text-sm font-medium">
+            <div className="flex h-full items-center bg-gray-200 px-3 py-2 text-gray-700">
               Bankroll
             </div>
-            <div className="bg-white px-3 py-2 text-gray-900 flex items-center h-full">
+            <div className="flex h-full items-center bg-white px-3 py-2 text-gray-900">
               ${bankroll}
             </div>
           </div>
 
-          <div className="flex items-center space-x-2 mx-4 h-10">
+          <div className="flex h-10 items-center space-x-2">
             <button
               type="button"
               className="px-2 py-1 bg-gray-200 rounded hover:bg-gray-300 h-full flex items-center justify-center"
@@ -192,7 +190,7 @@ const GameControls = ({
 
           <Button
             variant="outline"
-            className="h-10"
+            className="h-10 text-black hover:text-black"
             disabled={!sessionActive}
             onClick={() => handlePlaceBet(betAmount)}
           >
@@ -200,13 +198,13 @@ const GameControls = ({
           </Button>
         </div>
       ) : (
-        <div className="flex gap-2 justify-center items-center h-10">
-          <span className="inline-flex items-center h-full">
+        <div className="flex flex-wrap items-center justify-center gap-2 rounded-2xl border border-white/10 bg-black/20 px-3 py-3 backdrop-blur-sm sm:gap-3 sm:px-4">
+          <span className="inline-flex h-10 items-center rounded-md border border-white/10 bg-white/10 px-3 text-sm">
             Bankroll: {bankroll}
           </span>
           <Button
             variant="outline"
-            className="h-full"
+            className="h-10 text-black hover:text-black"
             disabled={!sessionActive || dealerPhasePending}
             onClick={() => {
               dispatch(hit());
@@ -217,7 +215,7 @@ const GameControls = ({
           </Button>
           <Button
             variant="outline"
-            className="h-full"
+            className="h-10 text-black hover:text-black"
             disabled={!sessionActive || dealerPhasePending}
             onClick={() => {
               dispatch(stand());
@@ -233,7 +231,7 @@ const GameControls = ({
           </Button>
           <Button
             variant="outline"
-            className="h-full"
+            className="h-10 text-black hover:text-black"
             disabled={!sessionActive || dealerPhasePending}
             onClick={() => {
               dispatch(double());
@@ -249,7 +247,7 @@ const GameControls = ({
           </Button>
           <Button
             variant="outline"
-            className="h-full"
+            className="h-10 text-black hover:text-black"
             disabled={!sessionActive || dealerPhasePending}
             onClick={() => {
               dispatch(split());
@@ -260,7 +258,7 @@ const GameControls = ({
           </Button>
           <Button
             variant="outline"
-            className="text-white border-0 bg-red-700 hover:text-gray-200 hover:bg-red-800 dark:border-1 dark:text-red-400 h-full"
+            className="h-10 border-0 bg-red-700 text-white hover:bg-red-800 hover:text-white dark:border-1 dark:text-white"
             disabled={!sessionActive || dealerPhasePending}
             onClick={() => {
               dispatch(surrender());
@@ -275,7 +273,7 @@ const GameControls = ({
             Surrender
           </Button>
           {dealerPhasePending ? (
-            <span className="inline-flex items-center text-sm text-muted-foreground">
+            <span className="inline-flex items-center text-sm text-white/70">
               Dealer playing...
             </span>
           ) : null}
