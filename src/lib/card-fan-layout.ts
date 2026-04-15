@@ -3,7 +3,7 @@ const CARD_ASPECT_RATIO = 1065 / 769;
 const MIN_CARD_WIDTH = 72;
 const MAX_CARD_WIDTH = 136;
 const FALLBACK_CARD_WIDTH = 104;
-const MIN_STEP_RATIO = 0.2;
+const MIN_STEP_RATIO = 0.12;
 const MAX_STEP_RATIO = 0.52;
 
 function clampNumber(value: number, min: number, max: number) {
@@ -18,15 +18,24 @@ export type CardFanMetrics = {
   overlap: number;
 };
 
-export function getResponsiveCardWidth(containerWidth: number, cardCount: number) {
+export function getResponsiveCardWidth(containerWidth: number) {
   if (containerWidth <= 0) {
     return FALLBACK_CARD_WIDTH;
   }
 
-  const countWeight = cardCount <= 2 ? 3.25 : cardCount + 0.9;
-  const targetWidth = containerWidth / countWeight;
+  if (containerWidth < 280) {
+    return MIN_CARD_WIDTH;
+  }
 
-  return clampNumber(targetWidth, MIN_CARD_WIDTH, MAX_CARD_WIDTH);
+  if (containerWidth < 360) {
+    return 92;
+  }
+
+  if (containerWidth < 480) {
+    return 112;
+  }
+
+  return MAX_CARD_WIDTH;
 }
 
 export function getCardFanMetrics(
@@ -34,7 +43,7 @@ export function getCardFanMetrics(
   cardCount: number
 ): CardFanMetrics {
   const safeCount = Math.max(cardCount, 1);
-  const cardWidth = getResponsiveCardWidth(containerWidth, safeCount);
+  const cardWidth = getResponsiveCardWidth(containerWidth);
   const cardHeight = cardWidth * CARD_ASPECT_RATIO;
 
   if (safeCount === 1) {

@@ -337,7 +337,7 @@ export default function Home() {
                       showCount ? <CardCountDisplay count={playState.runningCount} /> : null
                     }
                     centerArea={
-                      <div className="flex flex-col items-center gap-2 text-center">
+                      <div className="flex flex-col items-center gap-1 text-center">
                         <div className="rounded-full border border-white/15 bg-black/25 px-4 py-2 text-sm font-medium text-white shadow-sm backdrop-blur-sm">
                           {playState.dealerPhasePending ? "Dealer is playing..." : activeHandLabel}
                         </div>
