@@ -7,7 +7,6 @@ import {
   setStartingBankroll,
   setStartingBet,
   setBettingIncrement,
-  setAutoBet,
 } from "@/app/store/SettingsSlice";
 
 import {
@@ -18,16 +17,25 @@ import {
 } from "@/components/ui/sidebar";
 
 import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
+import {
+  getMaxBettingIncrement,
+  getMaxStartingBet,
+  MAX_STARTING_BANKROLL,
+  MIN_BETTING_INCREMENT,
+  MIN_STARTING_BANKROLL,
+  MIN_STARTING_BET,
+} from "@/lib/betting-settings";
 // import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 // import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 
 const BettingSettings = () => {
   const dispatch = useDispatch();
-  const { startingBankroll, startingBet, bettingIncrement, autoBet } =
+  const { startingBankroll, startingBet, bettingIncrement } =
     useSelector((state: RootState) => state.settings);
+  const maxStartingBet = getMaxStartingBet(startingBankroll);
+  const maxBettingIncrement = getMaxBettingIncrement(startingBankroll);
 
   return (
     <SidebarGroup>
@@ -41,6 +49,8 @@ const BettingSettings = () => {
                 <Input
                   id="starting-bankroll"
                   type="number"
+                  min={MIN_STARTING_BANKROLL}
+                  max={MAX_STARTING_BANKROLL}
                   className="w-24 ml-1 text-center font-medium
                     [appearance:textfield] 
                     [&::-webkit-outer-spin-button]:appearance-none 
@@ -51,6 +61,9 @@ const BettingSettings = () => {
                   }
                 />
               </div>
+              <p className="text-xs text-muted-foreground">
+                Limit: ${MIN_STARTING_BANKROLL.toLocaleString()} to ${MAX_STARTING_BANKROLL.toLocaleString()}
+              </p>
               <Separator />
 
               <div className="flex items-center justify-between py-1">
@@ -63,6 +76,8 @@ const BettingSettings = () => {
                   <Input
                     id="starting-bet"
                     type="number"
+                    min={MIN_STARTING_BET}
+                    max={maxStartingBet}
                     className="w-22 text-center font-medium
                       [appearance:textfield] 
                       [&::-webkit-outer-spin-button]:appearance-none 
@@ -74,6 +89,9 @@ const BettingSettings = () => {
                   />
                 </div>
               </div>
+              <p className="text-xs text-muted-foreground">
+                Max starting bet: ${maxStartingBet.toLocaleString()}
+              </p>
               <Separator />
 
               <div className="flex items-center py-1">
@@ -82,7 +100,8 @@ const BettingSettings = () => {
                 <Input
                   id="bet-increment"
                   type="number"
-                  min={1}
+                  min={MIN_BETTING_INCREMENT}
+                  max={maxBettingIncrement}
                   className="w-26 ml-1 text-center font-medium
                     [appearance:textfield] 
                     [&::-webkit-outer-spin-button]:appearance-none 
@@ -93,16 +112,10 @@ const BettingSettings = () => {
                   }
                 />
               </div>
+              <p className="text-xs text-muted-foreground">
+                Increment range: ${MIN_BETTING_INCREMENT.toLocaleString()} to ${maxBettingIncrement.toLocaleString()}
+              </p>
               <Separator />
-
-              <div className="flex items-center space-x-2">
-                <Switch
-                  id="auto-bet"
-                  checked={autoBet}
-                  onCheckedChange={(value) => dispatch(setAutoBet(value))}
-                />
-                <Label htmlFor="auto-bet">Auto bet</Label>
-              </div>
             </div>
           </SidebarMenuItem>
         </SidebarMenu>

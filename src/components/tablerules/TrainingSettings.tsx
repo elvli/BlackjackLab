@@ -6,7 +6,9 @@ import { RootState } from "@/app/store/store";
 import {
   setDealerSpeed,
   setShowCount,
+  setShowDealerScore,
   setShowHiddenCard,
+  setShowOwnScore,
   setShowOptimalPlay,
 } from "@/app/store/SettingsSlice";
 
@@ -24,9 +26,14 @@ import DealerSpeedSlider from "@/components/training/DealerSpeedSlider";
 
 const TrainingSettings = () => {
   const dispatch = useDispatch();
-  const { showCount, showHiddenCard, showOptimalPlay, dealerSpeed } = useSelector(
-    (state: RootState) => state.settings
-  );
+  const {
+    showCount,
+    showDealerScore,
+    showOwnScore,
+    showHiddenCard,
+    showOptimalPlay,
+    dealerSpeed,
+  } = useSelector((state: RootState) => state.settings);
 
   return (
     <SidebarGroup>
@@ -41,6 +48,30 @@ const TrainingSettings = () => {
                   onCheckedChange={(checked) => dispatch(setShowCount(checked))}
                 />
                 <Label htmlFor="show-count">Show count</Label>
+              </div>
+              <Separator />
+
+              <div className="flex items-center space-x-2">
+                <Switch
+                  id="show-dealer-score"
+                  checked={showDealerScore}
+                  onCheckedChange={(checked) =>
+                    dispatch(setShowDealerScore(checked))
+                  }
+                />
+                <Label htmlFor="show-dealer-score">Show dealer score</Label>
+              </div>
+              <Separator />
+
+              <div className="flex items-center space-x-2">
+                <Switch
+                  id="show-own-score"
+                  checked={showOwnScore}
+                  onCheckedChange={(checked) =>
+                    dispatch(setShowOwnScore(checked))
+                  }
+                />
+                <Label htmlFor="show-own-score">Show own score</Label>
               </div>
               <Separator />
 

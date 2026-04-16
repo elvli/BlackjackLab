@@ -3,6 +3,7 @@ import { createDeck, shuffleDeck, dealInitialHands, dealCard, calculateHandScore
 // createRiggedDeckForBlackjack
 import { Draft } from "immer";
 import { updateRunningCount } from "@/lib/cardCount";
+import { sanitizeBetAmount, sanitizeStartingBankroll } from "@/lib/betting-settings";
 
 export enum GameResult {
   WIN = "WIN",
@@ -133,8 +134,16 @@ const playSlice = createSlice({
   initialState: initialPlayState,
   reducers: {
     placeBet(state, action: PayloadAction<number>) {
-      const betAmount = action.payload;
+      if (state.bankroll <= 0) {
+        return;
+      }
+
+      const betAmount = sanitizeBetAmount(action.payload, state.bankroll);
       const finalBet = Math.min(betAmount, state.bankroll);
+
+      if (finalBet <= 0) {
+        return;
+      }
 
       state.currentBet = finalBet;
       state.bankroll -= finalBet;
@@ -362,8 +371,11 @@ const playSlice = createSlice({
         dealerPhasePending: action.payload.dealerPhasePending ?? false,
       };
     },
-    resetPlayState() {
-      return initialPlayState;
+    resetPlayState(_state, action: PayloadAction<number | undefined>) {
+      return {
+        ...initialPlayState,
+        bankroll: sanitizeStartingBankroll(action.payload ?? initialPlayState.bankroll),
+      };
     },
   },
 });

@@ -63,7 +63,9 @@ export default function Home() {
   const playState = useSelector((state: RootState) => state.play);
   const settingsState = useSelector((state: RootState) => state.settings);
   const showCount = settingsState.showCount;
+  const showDealerScore = settingsState.showDealerScore;
   const showHiddenCard = settingsState.showHiddenCard;
+  const showOwnScore = settingsState.showOwnScore;
   const {
     activeSession,
     suspendedSession,
@@ -218,7 +220,7 @@ export default function Home() {
   }, [sessionId]);
 
   const handleStartSession = async () => {
-    dispatch(resetPlayState());
+    dispatch(resetPlayState(settingsState.startingBankroll));
     await startSession(toSerializableSettingsState(settingsState));
     resetInactivityTimer();
   };
@@ -243,7 +245,7 @@ export default function Home() {
 
     await endSession(sessionId, reason);
     dismissIdleDialog();
-    dispatch(resetPlayState());
+    dispatch(resetPlayState(settingsState.startingBankroll));
   };
 
   const handleContinueSession = async () => {
@@ -279,6 +281,11 @@ export default function Home() {
 
   const visibleDealerScore =
     dealerHiddenCardIndices.length > 0 ? "?" : playState.dealerScore;
+  const dealerTitle = playState.dealerHand.length
+    ? showDealerScore
+      ? `Dealer (Score: ${visibleDealerScore})`
+      : "Dealer"
+    : "Dealer";
   const activeHandLabel =
     playState.playerHands.length > 0
       ? `Playing hand ${playState.currentHandIndex + 1} of ${playState.playerHands.length}`
@@ -330,7 +337,7 @@ export default function Home() {
 
             <div className="flex-1 overflow-hidden">
               <Card className="h-full overflow-hidden border-0 bg-green-900">
-                <CardContent className="h-full p-3 sm:p-4 lg:p-5">
+                <CardContent className="h-full">
                   <BlackjackTableLayout
                     overlayLeft={<BasicStrategyCheatSheet />}
                     overlayRight={
@@ -354,7 +361,7 @@ export default function Home() {
                     }
                     dealerArea={
                       <HandArea
-                        title={`Dealer${playState.dealerHand.length ? ` (Score: ${visibleDealerScore})` : ""}`}
+                        title={dealerTitle}
                       >
                         <div className="w-full max-w-3xl">
                           <CardFan
@@ -366,10 +373,15 @@ export default function Home() {
                     }
                     playerArea={
                       <div className="grid w-full grid-cols-[repeat(auto-fit,minmax(min(100%,16rem),1fr))] gap-4 sm:gap-5 lg:gap-6">
-                        {playState.playerHands.map((hand, i) => (
+                        {playState.playerHands.map((hand, i) => {
+                          const handTitle = showOwnScore
+                            ? `Hand ${i + 1} (Score: ${playState.playerScores[i] ?? 0})`
+                            : `Hand ${i + 1}`;
+
+                          return (
                           <HandArea
                             key={`${i}-${hand.length}`}
-                            title={`Hand ${i + 1} (Score: ${playState.playerScores[i] ?? 0})`}
+                            title={handTitle}
                             subtitle={
                               i === playState.currentHandIndex
                                 ? "Active hand"
@@ -383,7 +395,8 @@ export default function Home() {
                               <CardFan hand={hand} />
                             </div>
                           </HandArea>
-                        ))}
+                          );
+                        })}
                       </div>
                     }
                     controls={

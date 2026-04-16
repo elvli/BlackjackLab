@@ -1,5 +1,10 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { DEALER_SPEED_DEFAULT } from "@/lib/dealer-speed";
+import {
+  sanitizeBettingIncrement,
+  sanitizeStartingBankroll,
+  sanitizeStartingBet,
+} from "@/lib/betting-settings";
 
 export interface SettingsState {
   // Game settings
@@ -17,6 +22,8 @@ export interface SettingsState {
 
   // Training settings
   showCount: boolean;
+  showDealerScore: boolean;
+  showOwnScore: boolean;
   showHiddenCard: boolean;
   showOptimalPlay: boolean;
   dealerSpeed: number;
@@ -25,7 +32,6 @@ export interface SettingsState {
   startingBankroll: number;
   startingBet: number;
   bettingIncrement: number;
-  autoBet: boolean;
 }
 
 const initialState: SettingsState = {
@@ -44,6 +50,8 @@ const initialState: SettingsState = {
 
   // Training settings
   showCount: false,
+  showDealerScore: true,
+  showOwnScore: true,
   showHiddenCard: false,
   showOptimalPlay: false,
   dealerSpeed: DEALER_SPEED_DEFAULT,
@@ -52,7 +60,6 @@ const initialState: SettingsState = {
   startingBankroll: 1000,
   startingBet: 10,
   bettingIncrement: 10,
-  autoBet: false,
 };
 
 const settingsSlice = createSlice({
@@ -104,6 +111,12 @@ const settingsSlice = createSlice({
     setShowCount(state, action: PayloadAction<boolean>) {
       state.showCount = action.payload;
     },
+    setShowDealerScore(state, action: PayloadAction<boolean>) {
+      state.showDealerScore = action.payload;
+    },
+    setShowOwnScore(state, action: PayloadAction<boolean>) {
+      state.showOwnScore = action.payload;
+    },
     setShowHiddenCard(state, action: PayloadAction<boolean>) {
       state.showHiddenCard = action.payload;
     },
@@ -116,16 +129,21 @@ const settingsSlice = createSlice({
 
     // Betting settings
     setStartingBankroll(state, action: PayloadAction<number>) {
-      state.startingBankroll = action.payload;
+      state.startingBankroll = sanitizeStartingBankroll(action.payload);
+      state.startingBet = sanitizeStartingBet(state.startingBet, state.startingBankroll);
+      state.bettingIncrement = sanitizeBettingIncrement(
+        state.bettingIncrement,
+        state.startingBankroll
+      );
     },
     setStartingBet(state, action: PayloadAction<number>) {
-      state.startingBet = action.payload;
+      state.startingBet = sanitizeStartingBet(action.payload, state.startingBankroll);
     },
     setBettingIncrement(state, action: PayloadAction<number>) {
-      state.bettingIncrement = action.payload;
-    },
-    setAutoBet(state, action: PayloadAction<boolean>) {
-      state.autoBet = action.payload;
+      state.bettingIncrement = sanitizeBettingIncrement(
+        action.payload,
+        state.startingBankroll
+      );
     },
     hydrateSettingsState(_state, action: PayloadAction<SettingsState>) {
       return action.payload;
@@ -148,13 +166,14 @@ export const {
   setBjPayout,
   setShoePenetration,
   setShowCount,
+  setShowDealerScore,
+  setShowOwnScore,
   setShowHiddenCard,
   setShowOptimalPlay,
   setDealerSpeed,
   setStartingBankroll,
   setStartingBet,
   setBettingIncrement,
-  setAutoBet,
   hydrateSettingsState,
 } = settingsSlice.actions;
 

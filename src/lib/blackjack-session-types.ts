@@ -35,13 +35,14 @@ export type SerializableSettingsState = {
   bjPayout: string;
   shoePenetration: number;
   showCount: boolean;
+  showDealerScore: boolean;
+  showOwnScore: boolean;
   showHiddenCard: boolean;
   showOptimalPlay: boolean;
   dealerSpeed: number;
   startingBankroll: number;
   startingBet: number;
   bettingIncrement: number;
-  autoBet: boolean;
 };
 
 export type BlackjackSessionSnapshotPayload = {

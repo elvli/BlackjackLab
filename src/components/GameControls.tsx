@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useDispatch, useSelector } from "react-redux";
@@ -18,6 +18,7 @@ import {
 } from "@/app/store/PlayStateSlice";
 
 import { Plus, Minus } from "lucide-react";
+import { sanitizeBetAmount } from "@/lib/betting-settings";
 
 type GameControlsProps = {
   sessionActive?: boolean;
@@ -52,10 +53,12 @@ const GameControls = ({
     dealerPhasePending,
   } =
     useSelector((state: RootState) => state.play);
-  const { numDecks, dealerSpeed } = useSelector((state: RootState) => state.settings);
+  const { numDecks, dealerSpeed, startingBet, bettingIncrement } =
+    useSelector((state: RootState) => state.settings);
 
-  const [betAmount, setBetAmount] = useState(50);
+  const [betAmount, setBetAmount] = useState<number | null>(null);
   const dealerTurnRunningRef = useRef(false);
+  const displayedBetAmount = sanitizeBetAmount(betAmount ?? startingBet, bankroll);
 
   useEffect(() => {
     if (!sessionActive || !dealerPhasePending || dealerTurnRunningRef.current) {
@@ -114,26 +117,28 @@ const GameControls = ({
     };
   }, [dealerPhasePending, dealerSpeed, dispatch, sessionActive]);
 
-  const handlePlaceBet = (amount: number) => {
-    if (!sessionActive) return;
+  const handlePlaceBet = useCallback((amount: number) => {
+    if (!sessionActive || bankroll <= 0) return;
 
-    dispatch(placeBet(amount));
+    const sanitizedAmount = sanitizeBetAmount(amount, bankroll);
+
+    dispatch(placeBet(sanitizedAmount));
     dispatch(startGame(numDecks));
     onMove?.({
       type: "PLACE_BET",
       payload: {
-        amount,
+        amount: sanitizedAmount,
       },
     });
     onMove?.({
       type: "START_HAND",
       handIndex: 0,
       payload: {
-        amount,
+        amount: sanitizedAmount,
         numDecks,
       },
     });
-  };
+  }, [bankroll, dispatch, numDecks, onMove, sessionActive]);
 
   const handleMove = (type: LoggedMoveType) => {
     if (!sessionActive) return;
@@ -165,7 +170,9 @@ const GameControls = ({
             <button
               type="button"
               className="px-2 py-1 bg-gray-200 rounded hover:bg-gray-300 h-full flex items-center justify-center"
-              onClick={() => setBetAmount((prev) => Math.max(prev - 25, 0))}
+              onClick={() =>
+                setBetAmount(sanitizeBetAmount(displayedBetAmount - bettingIncrement, bankroll))
+              }
             >
               <Minus className="w-4 h-4 text-black" />
             </button>
@@ -176,13 +183,19 @@ const GameControls = ({
             [&::-webkit-outer-spin-button]:appearance-none 
             [&::-webkit-inner-spin-button]:appearance-none
             h-full"
-              value={betAmount}
-              onChange={(e) => setBetAmount(Number(e.target.value))}
+              value={displayedBetAmount}
+              min={1}
+              max={bankroll}
+              onChange={(e) =>
+                setBetAmount(sanitizeBetAmount(Number(e.target.value), bankroll))
+              }
             />
             <button
               type="button"
               className="px-2 py-1 bg-gray-200 rounded hover:bg-gray-300 h-full flex items-center justify-center"
-              onClick={() => setBetAmount((prev) => prev + 25)}
+              onClick={() =>
+                setBetAmount(sanitizeBetAmount(displayedBetAmount + bettingIncrement, bankroll))
+              }
             >
               <Plus className="w-4 h-4 text-black" />
             </button>
@@ -191,8 +204,8 @@ const GameControls = ({
           <Button
             variant="outline"
             className="h-10 text-black hover:text-black"
-            disabled={!sessionActive}
-            onClick={() => handlePlaceBet(betAmount)}
+            disabled={!sessionActive || bankroll <= 0}
+            onClick={() => handlePlaceBet(displayedBetAmount)}
           >
             Place Bet
           </Button>
