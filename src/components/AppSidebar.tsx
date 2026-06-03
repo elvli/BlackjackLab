@@ -64,7 +64,7 @@ export function AppSidebar() {
           </AccordionItem>
         </Accordion>
       </SidebarContent>
-      <SidebarFooter>THis is the footer</SidebarFooter>
+      <SidebarFooter />
     </Sidebar>
   );
 }

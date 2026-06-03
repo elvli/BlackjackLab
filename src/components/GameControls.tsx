@@ -20,6 +20,15 @@ import {
 import { Plus, Minus } from "lucide-react";
 import { sanitizeBetAmount } from "@/lib/betting-settings";
 
+const actionButtonClassName =
+  "h-10 text-black shadow-sm hover:text-black dark:border-sidebar-border dark:bg-sidebar dark:text-white dark:hover:bg-sidebar-accent dark:hover:text-white disabled:opacity-100 disabled:border-black/70 disabled:bg-black/65 disabled:text-white/25 disabled:shadow-none disabled:grayscale disabled:brightness-75 dark:disabled:border-black/70 dark:disabled:bg-black/65 dark:disabled:text-white/25";
+const placeBetButtonClassName =
+  "h-10 border-gray-300 bg-white text-black shadow-sm hover:bg-gray-100 hover:text-black dark:border-gray-300 dark:bg-white dark:text-black dark:hover:bg-gray-100 dark:hover:text-black disabled:opacity-100 disabled:bg-gray-200 disabled:text-gray-400 dark:disabled:bg-gray-200 dark:disabled:text-gray-400";
+const activeBankrollClassName =
+  "inline-flex h-10 items-center rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-900 shadow-sm dark:border-gray-300 dark:bg-white dark:text-gray-900";
+const surrenderButtonClassName =
+  "h-10 border-0 bg-red-700 text-white shadow-sm hover:bg-red-800 hover:text-white dark:border-0 dark:bg-red-700 dark:text-white dark:hover:bg-red-800 dark:hover:text-white disabled:opacity-100 disabled:bg-red-950 disabled:text-white/35 disabled:shadow-none dark:disabled:bg-red-950 dark:disabled:text-white/35";
+
 type GameControlsProps = {
   sessionActive?: boolean;
   onMove?: (move: {
@@ -49,16 +58,47 @@ const GameControls = ({
     betPlaced,
     currentHandIndex,
     playerHands,
+    playerScores,
     currentBet,
     dealerPhasePending,
+    deck,
+    endState,
   } =
     useSelector((state: RootState) => state.play);
-  const { numDecks, dealerSpeed, startingBet, bettingIncrement } =
+  const {
+    numDecks,
+    dealerSpeed,
+    startingBet,
+    bettingIncrement,
+    allowDoubleSplit,
+  } =
     useSelector((state: RootState) => state.settings);
 
   const [betAmount, setBetAmount] = useState<number | null>(null);
   const dealerTurnRunningRef = useRef(false);
   const displayedBetAmount = sanitizeBetAmount(betAmount ?? startingBet, bankroll);
+  const activeHand = playerHands[currentHandIndex];
+  const activeScore = playerScores[currentHandIndex] ?? 0;
+  const activeHandResult = endState[currentHandIndex];
+  const actionLocked =
+    !sessionActive || dealerPhasePending || !activeHand || Boolean(activeHandResult);
+  const canHit =
+    activeHand !== undefined && !actionLocked && activeScore < 21 && deck.length > 0;
+  const canStand = activeHand !== undefined && !actionLocked;
+  const canDouble =
+    activeHand !== undefined &&
+    !actionLocked &&
+    activeHand.length === 2 &&
+    deck.length > 0 &&
+    bankroll >= currentBet &&
+    (playerHands.length === 1 || allowDoubleSplit);
+  const canSplit =
+    activeHand !== undefined &&
+    !actionLocked &&
+    activeHand.length === 2 &&
+    activeHand[0]?.value === activeHand[1]?.value &&
+    deck.length >= 2 &&
+    bankroll >= currentBet;
 
   useEffect(() => {
     if (!sessionActive || !dealerPhasePending || dealerTurnRunningRef.current) {
@@ -203,7 +243,7 @@ const GameControls = ({
 
           <Button
             variant="outline"
-            className="h-10 text-black hover:text-black"
+            className={placeBetButtonClassName}
             disabled={!sessionActive || bankroll <= 0}
             onClick={() => handlePlaceBet(displayedBetAmount)}
           >
@@ -212,13 +252,13 @@ const GameControls = ({
         </div>
       ) : (
         <div className="flex flex-wrap items-center justify-center gap-2 rounded-2xl border border-white/10 bg-black/20 px-3 py-3 backdrop-blur-sm sm:gap-3 sm:px-4">
-          <span className="inline-flex h-10 items-center rounded-md border border-white/10 bg-white/10 px-3 text-sm">
+          <span className={activeBankrollClassName}>
             Bankroll: {bankroll}
           </span>
           <Button
             variant="outline"
-            className="h-10 text-black hover:text-black"
-            disabled={!sessionActive || dealerPhasePending}
+            className={actionButtonClassName}
+            disabled={!canHit}
             onClick={() => {
               dispatch(hit());
               handleMove("HIT");
@@ -228,8 +268,8 @@ const GameControls = ({
           </Button>
           <Button
             variant="outline"
-            className="h-10 text-black hover:text-black"
-            disabled={!sessionActive || dealerPhasePending}
+            className={actionButtonClassName}
+            disabled={!canStand}
             onClick={() => {
               dispatch(stand());
               handleMove("STAND");
@@ -244,8 +284,8 @@ const GameControls = ({
           </Button>
           <Button
             variant="outline"
-            className="h-10 text-black hover:text-black"
-            disabled={!sessionActive || dealerPhasePending}
+            className={actionButtonClassName}
+            disabled={!canDouble}
             onClick={() => {
               dispatch(double());
               handleMove("DOUBLE");
@@ -260,8 +300,8 @@ const GameControls = ({
           </Button>
           <Button
             variant="outline"
-            className="h-10 text-black hover:text-black"
-            disabled={!sessionActive || dealerPhasePending}
+            className={actionButtonClassName}
+            disabled={!canSplit}
             onClick={() => {
               dispatch(split());
               handleMove("SPLIT");
@@ -271,7 +311,7 @@ const GameControls = ({
           </Button>
           <Button
             variant="outline"
-            className="h-10 border-0 bg-red-700 text-white hover:bg-red-800 hover:text-white dark:border-1 dark:text-white"
+            className={surrenderButtonClassName}
             disabled={!sessionActive || dealerPhasePending}
             onClick={() => {
               dispatch(surrender());
